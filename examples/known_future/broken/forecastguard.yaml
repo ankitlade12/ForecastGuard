@@ -1,0 +1,6 @@
+name: known-future-broken
+data: data.csv
+cutoff: "2024-01-05"
+horizon: 2
+freq: D
+future_covariates: [promo, holiday]   # promo is blank in the holdout; holiday isn't a column

@@ -1,0 +1,8 @@
+name: known-future-clean
+data: data.csv
+cutoff: "2024-01-05"
+horizon: 2
+freq: D
+future_covariates: [promo]   # populated through the holdout (Jan 06-07)
+# `temp` is left undeclared on purpose: it's a past-only covariate and is
+# reported as such in the PASS summary, not flagged.

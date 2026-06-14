@@ -1,0 +1,5 @@
+name: cutoff-broken
+data: data.csv
+cutoff: "2024-01-05"   # horizon-2 holdout expected: Jan 06-07
+horizon: 2
+freq: D

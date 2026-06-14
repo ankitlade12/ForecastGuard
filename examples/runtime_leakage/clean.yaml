@@ -1,0 +1,6 @@
+name: runtime-clean
+data: data.csv
+cutoff: "2024-01-08"
+horizon: 2
+freq: D
+feature_fn: "features:clean_features"   # trailing-only — leak-free

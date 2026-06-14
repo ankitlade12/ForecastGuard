@@ -1,0 +1,6 @@
+name: runtime-leaky
+data: data.csv
+cutoff: "2024-01-08"
+horizon: 2
+freq: D
+feature_fn: "features:leaky_features"   # centered window + whole-series mean = leaks

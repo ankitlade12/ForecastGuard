@@ -1,0 +1,52 @@
+default_language_version:
+  python: python3.12
+default_stages: [pre-commit, pre-push]
+
+repos:
+  # Git & file hygiene
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-yaml
+      - id: check-toml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-docstring-first
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      - id: check-merge-conflict
+      - id: debug-statements
+      - id: detect-private-key
+      - id: mixed-line-ending
+      - id: check-ast
+      - id: check-case-conflict
+      - id: no-commit-to-branch
+        args: ['--branch', 'main']
+
+  # Python: ruff (replaces black + isort + flake8 + pyupgrade)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.0
+    hooks:
+      - id: ruff
+        args: [--fix]
+        types_or: [python, pyi]
+      - id: ruff-format
+        types_or: [python, pyi]
+
+  # Python: type checking
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.14.0
+    hooks:
+      - id: mypy
+        additional_dependencies: [pydantic>=2.0, types-PyYAML]
+        files: ^forecastguard/
+
+  # Local — pytest unit tier (fast). Run on every commit.
+  - repo: local
+    hooks:
+      - id: pytest-unit
+        name: pytest (unit tier)
+        entry: uv run pytest -m unit
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]

@@ -1,0 +1,12 @@
+name: quickstart
+data: data.csv
+id_col: unique_id
+time_col: ds
+target_col: y
+cutoff: "2024-01-03"      # train rows: ds <= cutoff; validation rows after it
+horizon: 1
+freq: D
+future_covariates: [promo]
+# feature_fn is omitted on purpose: the runtime-leakage check then SKIPS LOUDLY,
+# which demonstrates the honest-scope behavior. To enable it, point at a callable:
+#   feature_fn: "myproject.features:build_features"
