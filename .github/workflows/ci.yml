@@ -28,14 +28,14 @@ jobs:
 
       - name: Lint (ruff)
         run: |
-          uv run ruff check forecastguard/ tests/
-          uv run ruff format --check forecastguard/ tests/
+          uv run --extra dev --python ${{ matrix.python-version }} ruff check forecastguard/ tests/
+          uv run --extra dev --python ${{ matrix.python-version }} ruff format --check forecastguard/ tests/
 
       - name: Type-check (mypy strict)
-        run: uv run mypy forecastguard/
+        run: uv run --extra dev --python ${{ matrix.python-version }} mypy forecastguard/
 
       - name: Test (pytest)
-        run: uv run pytest
+        run: uv run --extra dev --python ${{ matrix.python-version }} pytest
 
   conclude:
     name: conclude
