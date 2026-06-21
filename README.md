@@ -145,9 +145,9 @@ return a typed `CheckResult`. See [CONTRIBUTING.md](CONTRIBUTING.md) and
 ## Project layout
 
 ```
-forecastguard/   # the package: models, checks (protocol + 3 stubs), runner, config, cli
+forecastguard/   # the package: models, checks (3 implemented checks), runner, config, cli
 tests/           # pytest tiers: unit, contract, integration
-examples/        # quickstart spec + data (leaky→clean demo lands in Slice 4)
+examples/        # quickstart plus clean/broken demos for the shipped checks
 docs/            # PRD, ARCHITECTURE, DECISIONS, plans
 action.yml       # composite GitHub Action wrapping the CLI
 ```

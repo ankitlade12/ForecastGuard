@@ -221,6 +221,15 @@ def test_missing_time_column() -> None:
     assert _codes(result) == {"FG-CUTOFF-010"}
 
 
+def test_missing_target_column() -> None:
+    result = _run(
+        {"unique_id": ["A", "A"], "ds": ["2024-01-01", "2024-01-02"]},
+        cutoff="2024-01-01",
+        horizon=1,
+    )
+    assert _codes(result) == {"FG-CUTOFF-010"}
+
+
 def test_unparseable_timestamps() -> None:
     result = _run(
         {"unique_id": ["A", "A"], "ds": ["2024-01-01", "not-a-date"], "y": [1, 2]},

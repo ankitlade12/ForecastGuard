@@ -83,6 +83,16 @@ class RuntimeLeakageCheck:
                 "feature_fn output must be a DataFrame with unique "
                 f"({spec.id_col}, {spec.time_col}) rows including those columns"
             )
+        if full_pre.empty or repeat_pre.empty or masked_pre.empty:
+            return self._skip("feature_fn output has no comparable pre-cutoff rows")
+        if not full_pre.index.equals(repeat_pre.index) or not full_pre.index.equals(
+            masked_pre.index
+        ):
+            return self._skip("feature_fn output pre-cutoff rows do not align")
+        if set(full_pre.columns) != set(repeat_pre.columns) or set(full_pre.columns) != set(
+            masked_pre.columns
+        ):
+            return self._skip("feature_fn output feature columns do not align")
 
         nondeterministic = _changed_columns(full_pre, repeat_pre)
         if nondeterministic:

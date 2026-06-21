@@ -6,7 +6,22 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+- `CutoffIntegrityCheck` now treats a missing declared `target_col` as a
+  structural dataset error (`FG-CUTOFF-010`) instead of allowing a run to exit
+  successfully against an incomplete ForecastGuard contract.
+- `RuntimeLeakageCheck` now skips loudly when the feature function produces no
+  comparable pre-cutoff rows, or when pre-cutoff rows do not align across the
+  full/repeat/masked runs, instead of passing after a zero-row perturbation diff.
+
+### Changed
+- The composite GitHub Action now installs ForecastGuard from the action checkout
+  by default, with the `version` input reserved for explicitly testing a
+  published PyPI version.
+
 ### Added
+- Integration coverage now exercises the advertised broken/clean examples for
+  cutoff integrity, known-future covariates, and runtime leakage.
 - **Slice 4 — Runtime-leakage check (the moat).** `RuntimeLeakageCheck` is now
   implemented (behavioural perturbation): contract-aware future masking, a
   determinism probe, and a pre-cutoff diff that flags any feature that reads
@@ -32,7 +47,8 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   hygiene files, CI + PyPI publish workflows, and the composite GitHub Action.
 
 ### Not yet (Slice 5 — Ship)
-- GitHub Action hardening + README GIF; a Nixtla `cross_validation` tutorial PR.
+- Remaining GitHub Action release validation + README GIF; a Nixtla
+  `cross_validation` tutorial PR.
 - A chosen license (see README → License).
 - First PyPI release.
 

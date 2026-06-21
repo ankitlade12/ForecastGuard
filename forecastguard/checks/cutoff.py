@@ -86,7 +86,7 @@ def _structural_guard(ctx: CheckContext) -> Violation | None:
     spec = ctx.spec
     frame = ctx.frame
 
-    for col in (spec.id_col, spec.time_col):
+    for col in (spec.id_col, spec.time_col, spec.target_col):
         if col not in frame.columns:
             return Violation(
                 code="FG-CUTOFF-010",

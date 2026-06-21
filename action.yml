@@ -15,7 +15,7 @@ inputs:
     required: false
     default: "false"
   version:
-    description: "ForecastGuard version specifier to install (e.g. '==0.1.0')."
+    description: "Optional PyPI version specifier to install (e.g. '==0.1.0'). Empty installs this action checkout."
     required: false
     default: ""
 
@@ -27,11 +27,26 @@ runs:
       with:
         python-version: "3.12"
 
-    - name: Install ForecastGuard
+    - name: Install ForecastGuard from this action
+      if: ${{ inputs.version == '' }}
       shell: bash
-      run: python -m pip install --upgrade "forecastguard${{ inputs.version }}"
+      run: python -m pip install --upgrade "$GITHUB_ACTION_PATH"
+
+    - name: Install ForecastGuard from PyPI
+      if: ${{ inputs.version != '' }}
+      shell: bash
+      env:
+        FG_VERSION: ${{ inputs.version }}
+      run: python -m pip install --upgrade "forecastguard${FG_VERSION}"
 
     - name: Run ForecastGuard
       shell: bash
+      env:
+        FG_SPEC: ${{ inputs.spec }}
+        FG_STRICT: ${{ inputs.strict }}
       run: |
-        forecastguard run --spec "${{ inputs.spec }}" ${{ inputs.strict == 'true' && '--strict' || '' }}
+        if [ "$FG_STRICT" = "true" ]; then
+          forecastguard run --spec "$FG_SPEC" --strict
+        else
+          forecastguard run --spec "$FG_SPEC"
+        fi

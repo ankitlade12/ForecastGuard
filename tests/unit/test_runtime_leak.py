@@ -162,6 +162,30 @@ def test_output_without_id_time_skips() -> None:
     assert result.status is CheckStatus.SKIPPED
 
 
+def test_output_without_comparable_pre_cutoff_rows_skips() -> None:
+    def future_only(df: pd.DataFrame) -> pd.DataFrame:
+        future = pd.to_datetime(df["ds"]) > pd.Timestamp("2024-01-04")
+        return df.loc[future, ["unique_id", "ds"]].assign(f=1)
+
+    result = _run(future_only)
+    assert result.status is CheckStatus.SKIPPED
+    assert "pre-cutoff" in (result.detail or "")
+
+
+def test_output_with_unaligned_feature_columns_skips() -> None:
+    def conditional_feature(df: pd.DataFrame) -> pd.DataFrame:
+        df = df.sort_values(["unique_id", "ds"]).copy()
+        df["lag1"] = df.groupby("unique_id")["y"].shift(1)
+        if df["y"].isna().any():
+            return df[["unique_id", "ds", "lag1"]]
+        df["whole_series_mean"] = df.groupby("unique_id")["y"].transform("mean")
+        return df[["unique_id", "ds", "lag1", "whole_series_mean"]]
+
+    result = _run(conditional_feature)
+    assert result.status is CheckStatus.SKIPPED
+    assert "feature columns" in (result.detail or "")
+
+
 def test_no_future_rows_skips() -> None:
     result = _run(_clean_lag, cutoff="2024-01-31")
     assert result.status is CheckStatus.SKIPPED
