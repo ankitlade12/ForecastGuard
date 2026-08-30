@@ -23,7 +23,8 @@ forecastguard.yaml
       │  config.load_spec()
       ▼
   ForecastSpec ───────────────► runner.build_context()
-                                      │  (load frame, import feature_fn)
+                                      │  (load frame; resolve feature/forecast
+                                      │   callables, adapter evidence, AST hints)
                                       ▼
                                  CheckContext
                                       │  runner.run_checks()
@@ -33,7 +34,7 @@ forecastguard.yaml
      Check             CovariatesCheck        Check (the moat)
             └──────────────┴──────────┬───────────┘
                                       ▼
-                                   Report ──► cli._render() + exit code
+                                   Report ──► human / JSON / SARIF / GitHub + exit code
 ```
 
 ## Module layout
@@ -42,12 +43,21 @@ forecastguard.yaml
 forecastguard/
 ├── models/
 │   ├── spec.py          # ForecastSpec — the declared input contract
-│   └── report.py        # Report, CheckResult, Violation, Severity, CheckStatus
+│   ├── report.py        # Report, CheckResult, Violation, Severity, CheckStatus
+│   ├── adapter.py       # fitted-framework consumed-feature evidence
+│   └── hint.py          # explanation-only source locations
 ├── checks/
 │   ├── protocol.py      # Check protocol + CheckContext (the run bundle)
 │   ├── cutoff.py        # Check 1 — deterministic dataframe validation
-│   ├── known_future.py  # Check 2 — declared-vs-used covariate diff
-│   └── runtime_leak.py  # Check 3 — behavioural perturbation (the moat)
+│   ├── known_future.py  # Check 2 — declared availability contract
+│   ├── runtime_leak.py  # Check 3 — feature perturbation + aggregation
+│   └── forecast_leak.py # forecast-output perturbation component
+├── adapters/
+│   └── mlforecast.py    # optional ts.features_order_ introspection
+├── windows.py           # shared single/rolling/CV window semantics
+├── perturb.py           # nullify/noise/sign_flip contract-aware inputs
+├── explain.py           # AST hints after behavioural proof only
+├── render.py            # SARIF + GitHub renderers over typed Report
 ├── runner.py            # build_context + run_checks (orchestration + IO)
 ├── config.py            # load_spec (YAML -> validated ForecastSpec)
 └── cli.py               # Click entry point: `forecastguard run`
@@ -63,9 +73,9 @@ docs/                    # PRD, ARCHITECTURE, DECISIONS, plans
 1. **Nixtla-native contract (D-001).** The data shape is `unique_id` / `ds` /
    `y` by default. Column names are configurable on the spec, never hardcoded in
    a check.
-2. **Behavioural over source-parsing (D-003).** The leakage check perturbs and
-   diffs; it does not parse the user's source. This is what catches leaks that
-   AST analysis misses and avoids false positives on correct trailing features.
+2. **Behavioural verdicts, source explanation (D-003/D-018).** Leakage verdicts
+   come only from perturb-and-diff. AST inspection can annotate a proven failure
+   with a likely source line; it never creates or suppresses a verdict.
 3. **Check protocol + stub pattern (D-004).** Every check implements `Check` and
    depends only on `CheckContext` — never on file IO. A check ships as a stub
    first (loud SKIP) so the runner and CLI are buildable and testable before the
@@ -85,7 +95,10 @@ docs/                    # PRD, ARCHITECTURE, DECISIONS, plans
 - **contract** — every check satisfies the `Check` protocol; the registry stays
   consistent. (The protocol analogue of GoldMind's connector parity tests.)
 - **integration** — `runner.run_checks` + the CLI run end to end against a fixed
-  example and produce the expected report and exit code.
+  example and produce the expected report and exit code; the optional Nixtla
+  extra runs a real fitted-MLForecast adapter test.
+- **public benchmarks** — mutation controls establish detector recall on seeded
+  cases; a JSON scale probe records whether a new backend is justified.
 
 Quality gates are commit-time (pre-commit: ruff + mypy + unit tier) plus the CI
 workflow (`.github/workflows/ci.yml`) on push/PR.

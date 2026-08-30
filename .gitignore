@@ -23,6 +23,7 @@ htmlcov/
 .coverage
 .coverage.*
 coverage.xml
+examples/nixtla_rolling/cv-generated.csv
 
 # Environment / secrets
 .env

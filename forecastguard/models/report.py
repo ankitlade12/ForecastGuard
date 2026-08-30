@@ -8,6 +8,7 @@ tier render these typed payloads.
 from __future__ import annotations
 
 from enum import StrEnum
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -104,6 +105,7 @@ class CheckResult(BaseModel):
 class Report(BaseModel):
     """Aggregated result of a ForecastGuard run."""
 
+    schema_version: Literal["1.0"] = "1.0"
     spec_name: str | None = None
     results: list[CheckResult] = Field(default_factory=list)
 

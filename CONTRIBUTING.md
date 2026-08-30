@@ -1,7 +1,7 @@
 # Contributing to ForecastGuard
 
 Thanks for considering a contribution! ForecastGuard is a narrow, high-trust
-gate — the bar is correctness and zero false positives, so contributions lean on
+gate — the bar is correctness and high-precision failures, so contributions lean on
 tests and clear scope.
 
 ## Code of Conduct
@@ -51,7 +51,7 @@ make cli-demo                # run the CLI against examples/quickstart
    dict (D-005).
 4. Register it in `forecastguard/checks/__init__.py::default_checks`.
 5. Add **unit tests** (rule boundaries) and a **contract test** (protocol
-   conformance). Aim for zero false positives.
+   conformance). Prefer bounded claims and high-precision failures.
 
 ## Pull request checklist
 

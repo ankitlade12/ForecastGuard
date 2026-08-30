@@ -9,9 +9,11 @@ New checks implement :class:`Check` and register in
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
+from forecastguard.models.adapter import AdapterUsage
+from forecastguard.models.hint import SourceHint
 from forecastguard.models.report import CheckResult
 from forecastguard.models.spec import ForecastSpec
 
@@ -30,11 +32,20 @@ class CheckContext:
         frame: The loaded dataset (long Nixtla format).
         feature_fn: The resolved feature-engineering callable, or ``None`` when
             the spec declared no ``feature_fn``.
+        forecast_fn: Resolved ``(train_df, future_df) -> predictions`` callable.
+        adapter_usage: Introspected framework feature usage, when available.
+        adapter_error: Loud adapter precondition/error from the IO boundary.
+        source_hints: Best-effort explanations; checks may attach them only to
+            an independently established behavioural failure.
     """
 
     spec: ForecastSpec
     frame: pd.DataFrame
     feature_fn: Callable[..., pd.DataFrame] | None = None
+    forecast_fn: Callable[..., pd.DataFrame] | None = None
+    adapter_usage: AdapterUsage | None = None
+    adapter_error: str | None = None
+    source_hints: list[SourceHint] = field(default_factory=list)
 
 
 @runtime_checkable

@@ -80,6 +80,8 @@ def test_clean_trailing_feature_passes() -> None:
     result = _run(_clean_lag)
     assert result.status is CheckStatus.PASS
     assert result.violations == []
+    assert "no future sensitivity detected" in result.summary.lower()
+    assert "leak-free" not in result.summary.lower()
 
 
 def test_centered_window_leak_detected() -> None:
@@ -190,3 +192,57 @@ def test_no_future_rows_skips() -> None:
     result = _run(_clean_lag, cutoff="2024-01-31")
     assert result.status is CheckStatus.SKIPPED
     assert "nothing to hide" in (result.detail or "")
+
+
+def test_rolling_leakage_evidence_identifies_each_affected_window() -> None:
+    spec = ForecastSpec(
+        data=Path("unused.csv"),
+        cutoffs=["2024-01-02", "2024-01-04"],
+        horizon=2,
+        freq="D",
+    )
+    result = RuntimeLeakageCheck().run(
+        CheckContext(spec=spec, frame=_frame(), feature_fn=_global_mean)
+    )
+    assert result.status is CheckStatus.FAIL
+    assert {violation.evidence["cutoff"] for violation in result.violations} == {
+        "2024-01-02T00:00:00",
+        "2024-01-04T00:00:00",
+    }
+
+
+def test_runtime_leakage_skips_cv_output_without_raw_history() -> None:
+    frame = pd.DataFrame(
+        {
+            "unique_id": ["A", "A"],
+            "cutoff": ["2024-01-02", "2024-01-02"],
+            "ds": ["2024-01-03", "2024-01-04"],
+            "y": [1, 2],
+        }
+    )
+    spec = ForecastSpec(data=Path("unused.csv"), cutoff_col="cutoff", horizon=2, freq="D")
+    result = RuntimeLeakageCheck().run(
+        CheckContext(spec=spec, frame=frame, feature_fn=_global_mean)
+    )
+    assert result.status is CheckStatus.SKIPPED
+    assert "raw history" in (result.detail or "")
+
+
+def test_feature_perturbation_modes_are_reported() -> None:
+    spec = ForecastSpec(
+        data=Path("unused.csv"),
+        cutoff="2024-01-04",
+        horizon=2,
+        freq="D",
+        perturbations=["nullify", "noise", "sign_flip"],
+        perturbation_seed=42,
+    )
+    result = RuntimeLeakageCheck().run(
+        CheckContext(spec=spec, frame=_frame(), feature_fn=_global_mean)
+    )
+    assert result.status is CheckStatus.FAIL
+    assert {violation.evidence["perturbation"] for violation in result.violations} == {
+        "nullify",
+        "noise",
+        "sign_flip",
+    }

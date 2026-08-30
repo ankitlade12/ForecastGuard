@@ -20,7 +20,7 @@ corrupted one that fails with `FG-CUTOFF-001/003/004`. See its
 
 ## known_future/ — clean → broken
 
-Demonstrates the declared-vs-used contract diff: a clean spec, and one whose
+Demonstrates the declared availability contract: a clean spec, and one whose
 `future_covariates` declaration is inconsistent with the data
 (`FG-FUTURE-001/002`). See its [README](known_future/README.md).
 
@@ -30,3 +30,9 @@ The headline demo: a real `feature_fn` that reads across the cutoff (`leaky.yaml
 vs. one that doesn't (`clean.yaml`), over the same data. The leaky run fails with
 `FG-LEAK-001`; the clean run passes all three checks. See its
 [README](runtime_leakage/README.md).
+
+## nixtla_rolling/ — rolling raw history + CV output
+
+Runnable `cutoffs` and MLForecast-style `cutoff_col` examples, plus a script
+that regenerates real `MLForecast.cross_validation` output. See the
+[tutorial](../docs/tutorials/nixtla-rolling.md).

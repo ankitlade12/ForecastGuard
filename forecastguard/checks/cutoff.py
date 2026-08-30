@@ -1,28 +1,17 @@
-"""Check 1 — Cutoff integrity (deterministic dataframe validation).
+"""Check 1 — cutoff integrity for single and rolling-origin backtests.
 
-Validates that the dataset is correctly shaped for a single-cutoff, horizon-step
-holdout backtest at ``spec.cutoff`` — with zero false positives. It runs purely
-on the dataframe; no model or feature function is required.
-
-Semantics (see DECISIONS D-011):
-
-* **Train** rows of a series are those with ``ds <= cutoff``; **holdout** rows
-  are those with ``ds > cutoff``.
-* A well-formed series has training history and a holdout equal to exactly the
-  ``horizon`` grid points (at ``spec.freq``) immediately following the cutoff —
-  i.e. ``{cutoff + 1·Δ, …, cutoff + horizon·Δ}``. Anchoring on the cutoff (not on
-  the last training row) means a gap *before* the cutoff is not flagged, and an
-  on-grid cutoff that sits after the last training row is handled correctly.
+The check accepts a raw train-plus-validation panel with either one ``cutoff``
+or several ``cutoffs``, plus Nixtla-style cross-validation output identified by
+``cutoff_col``. Rolling windows are always bounded to the declared horizon.
 
 Violations:
 
-* ``FG-CUTOFF-001`` — duplicate ``(id, ds)`` rows (CRITICAL)
-* ``FG-CUTOFF-002`` — series has no training history; all rows ``> cutoff`` (HIGH)
-* ``FG-CUTOFF-003`` — series has an empty holdout; all rows ``<= cutoff`` (HIGH)
-* ``FG-CUTOFF-004`` — holdout doesn't match the ``horizon`` grid points after the
-  cutoff: too few / too many points, a gap, or off-grid timestamps (HIGH)
-* ``FG-CUTOFF-010/011/012/013`` — structural guards: missing column, unparseable
-  timestamps, invalid ``freq``/``cutoff``, empty dataset
+* ``FG-CUTOFF-001`` — duplicate validation key (CRITICAL)
+* ``FG-CUTOFF-002`` — raw-history series has no training history (HIGH)
+* ``FG-CUTOFF-003`` — series/window has an empty holdout (HIGH)
+* ``FG-CUTOFF-004`` — holdout differs from the expected horizon grid (HIGH)
+* ``FG-CUTOFF-010/011/012/013`` — structural guards
+* ``FG-CUTOFF-014`` — null series identifier (CRITICAL)
 """
 
 from __future__ import annotations
@@ -32,243 +21,290 @@ from pandas.tseries.frequencies import to_offset
 
 from forecastguard.checks.protocol import CheckContext
 from forecastguard.models.report import CheckResult, Severity, Violation
+from forecastguard.windows import forecast_grid, holdout_mask, window_cutoffs, window_location
 
-# Cap per-series violations so a globally-misconfigured cutoff doesn't print
-# thousands of lines; the overflow is summarised in one INFO violation.
 _MAX_SERIES_VIOLATIONS = 50
 
 
 class CutoffIntegrityCheck:
-    """Deterministic validation of the train/holdout split. See module docstring."""
+    """Deterministic validation of all declared train/holdout windows."""
 
     check_id = "cutoff_integrity"
     name = "Cutoff integrity"
 
     def run(self, ctx: CheckContext) -> CheckResult:
         spec = ctx.spec
-
         guard = _structural_guard(ctx)
         if guard is not None:
             return CheckResult.failed(self.check_id, self.name, guard.message, [guard])
 
-        cutoff = pd.Timestamp(spec.cutoff)
         offset = to_offset(spec.freq)
-        work = ctx.frame[[spec.id_col, spec.time_col]].copy()
+        columns = [spec.id_col, spec.time_col]
+        if spec.cutoff_col is not None:
+            columns.append(spec.cutoff_col)
+        work = ctx.frame[columns].copy()
         work["_ds"] = pd.to_datetime(work[spec.time_col])
+        if spec.cutoff_col is not None:
+            work["_cutoff"] = pd.to_datetime(work[spec.cutoff_col])
 
+        cutoffs = window_cutoffs(spec, work)
+        rolling = spec.cutoff_col is not None or bool(spec.cutoffs)
         violations: list[Violation] = []
-        dup = _duplicate_violation(work, spec.id_col)
-        if dup is not None:
-            violations.append(dup)
-        violations.extend(_series_violations(work, spec.id_col, cutoff, offset, spec.horizon))
+        duplicate = _duplicate_violation(work, spec.id_col, cv_output=spec.cutoff_col is not None)
+        if duplicate is not None:
+            violations.append(duplicate)
+        violations.extend(
+            _window_violations(
+                work,
+                spec.id_col,
+                cutoffs,
+                offset,
+                spec.horizon,
+                ctx,
+                rolling=rolling,
+            )
+        )
 
         if violations:
-            count = sum(1 for v in violations if v.severity is not Severity.INFO)
+            count = sum(1 for violation in violations if violation.severity is not Severity.INFO)
             plural = "s" if count != 1 else ""
+            scope = (
+                f"across {len(cutoffs)} window(s)"
+                if rolling
+                else f"at cutoff {cutoffs[0].isoformat()}"
+            )
             return CheckResult.failed(
                 self.check_id,
                 self.name,
-                f"{count} cutoff-integrity violation{plural} at cutoff {cutoff.isoformat()}",
+                f"{count} cutoff-integrity violation{plural} {scope}",
                 violations,
             )
 
         n_series = int(work[spec.id_col].nunique())
+        if rolling:
+            return CheckResult.passed(
+                self.check_id,
+                self.name,
+                f"{n_series} series; {len(cutoffs)} window(s) well-formed "
+                f"(horizon {spec.horizon}, freq {spec.freq})",
+            )
         return CheckResult.passed(
             self.check_id,
             self.name,
-            f"{n_series} series; holdouts well-formed at cutoff {cutoff.isoformat()} "
+            f"{n_series} series; holdouts well-formed at cutoff {cutoffs[0].isoformat()} "
             f"(horizon {spec.horizon}, freq {spec.freq})",
         )
 
 
 def _structural_guard(ctx: CheckContext) -> Violation | None:
-    """Return the first blocking structural problem, or None if the frame is sane."""
     spec = ctx.spec
     frame = ctx.frame
-
-    for col in (spec.id_col, spec.time_col, spec.target_col):
-        if col not in frame.columns:
+    required = [spec.id_col, spec.time_col, spec.target_col]
+    if spec.cutoff_col is not None:
+        required.append(spec.cutoff_col)
+    for column in required:
+        if column not in frame.columns:
             return Violation(
                 code="FG-CUTOFF-010",
                 severity=Severity.CRITICAL,
-                message=f"required column {col!r} is missing from the dataset",
-                evidence={"columns": [str(c) for c in frame.columns]},
+                message=f"required column {column!r} is missing from the dataset",
+                evidence={"columns": [str(value) for value in frame.columns]},
             )
-
-    if len(frame) == 0:
+    if frame.empty:
         return Violation(
-            code="FG-CUTOFF-013",
-            severity=Severity.HIGH,
-            message="dataset has no rows",
+            code="FG-CUTOFF-013", severity=Severity.HIGH, message="dataset has no rows"
         )
-
+    null_ids = frame[spec.id_col].isna()
+    if bool(null_ids.any()):
+        return Violation(
+            code="FG-CUTOFF-014",
+            severity=Severity.CRITICAL,
+            message=f"column {spec.id_col!r} contains null series identifiers",
+            evidence={"null_id_rows": int(null_ids.sum())},
+        )
     try:
-        parsed = pd.to_datetime(frame[spec.time_col], errors="raise")
+        parsed_ds = pd.to_datetime(frame[spec.time_col], errors="raise")
+        if spec.cutoff_col is not None:
+            parsed_cutoffs = pd.to_datetime(frame[spec.cutoff_col], errors="raise")
+            if bool(parsed_cutoffs.isna().any()):
+                raise ValueError(f"column {spec.cutoff_col!r} contains empty cutoffs")
     except (ValueError, TypeError) as exc:
         return Violation(
             code="FG-CUTOFF-011",
             severity=Severity.CRITICAL,
-            message=f"column {spec.time_col!r} has timestamps that can't be parsed",
+            message="timestamp or cutoff column has values that can't be parsed",
             evidence={"error": str(exc)},
         )
-    if bool(parsed.isna().any()):
+    if bool(parsed_ds.isna().any()):
         return Violation(
             code="FG-CUTOFF-011",
             severity=Severity.CRITICAL,
             message=f"column {spec.time_col!r} contains unparseable/empty timestamps",
-            evidence={"na_count": int(parsed.isna().sum())},
+            evidence={"na_count": int(parsed_ds.isna().sum())},
         )
-
     try:
-        pd.Timestamp(spec.cutoff)
+        window_cutoffs(spec, frame)
         to_offset(spec.freq)
-    except (ValueError, TypeError) as exc:
+    except (ValueError, TypeError, KeyError) as exc:
         return Violation(
             code="FG-CUTOFF-012",
             severity=Severity.CRITICAL,
-            message=f"invalid cutoff {spec.cutoff!r} or freq {spec.freq!r}",
-            evidence={"error": str(exc)},
+            message="invalid cutoff source or frequency",
+            evidence={"error": str(exc), "freq": spec.freq},
         )
     return None
 
 
-def _duplicate_violation(work: pd.DataFrame, id_col: str) -> Violation | None:
-    """Flag duplicate ``(id, ds)`` pairs — they corrupt both train and holdout."""
-    dup_mask = work.duplicated(subset=[id_col, "_ds"], keep=False)
-    if not bool(dup_mask.any()):
+def _duplicate_violation(work: pd.DataFrame, id_col: str, *, cv_output: bool) -> Violation | None:
+    keys = [id_col, "_cutoff", "_ds"] if cv_output else [id_col, "_ds"]
+    duplicate_mask = work.duplicated(subset=keys, keep=False)
+    if not bool(duplicate_mask.any()):
         return None
-    dups = work.loc[dup_mask, [id_col, "_ds"]].drop_duplicates()
-    sample = [
-        {"id": str(row[id_col]), "ds": pd.Timestamp(row["_ds"]).isoformat()}
-        for _, row in dups.head(_MAX_SERIES_VIOLATIONS).iterrows()
-    ]
+    duplicates = work.loc[duplicate_mask, keys].drop_duplicates()
+    sample: list[dict[str, object]] = []
+    for _, row in duplicates.head(_MAX_SERIES_VIOLATIONS).iterrows():
+        item: dict[str, object] = {
+            "id": str(row[id_col]),
+            "ds": pd.Timestamp(row["_ds"]).isoformat(),
+        }
+        if cv_output:
+            item["cutoff"] = pd.Timestamp(row["_cutoff"]).isoformat()
+        sample.append(item)
+    label = "(id, cutoff, ds)" if cv_output else "(id, ds)"
     return Violation(
         code="FG-CUTOFF-001",
         severity=Severity.CRITICAL,
-        message=f"{len(dups)} duplicate (id, ds) timestamp(s) — corrupts train and holdout",
-        evidence={"duplicate_keys": len(dups), "sample": sample},
+        message=f"{len(duplicates)} duplicate {label} timestamp(s) — corrupts validation",
+        evidence={"duplicate_keys": len(duplicates), "sample": sample},
     )
 
 
-def _series_violations(
+def _window_violations(
     work: pd.DataFrame,
     id_col: str,
-    cutoff: pd.Timestamp,
+    cutoffs: list[pd.Timestamp],
     offset: pd.offsets.BaseOffset,
     horizon: int,
+    ctx: CheckContext,
+    *,
+    rolling: bool,
 ) -> list[Violation]:
-    """One violation (at most) per malformed series, in deterministic id order."""
     violations: list[Violation] = []
     truncated = 0
-    for series_id, group in work.sort_values([id_col, "_ds"]).groupby(id_col, sort=True):
-        violation = _classify_series(series_id, group["_ds"], cutoff, offset, horizon)
-        if violation is None:
-            continue
-        if len(violations) < _MAX_SERIES_VIOLATIONS:
-            violations.append(violation)
-        else:
-            truncated += 1
-
+    groups = {
+        series_id: group
+        for series_id, group in work.sort_values([id_col, "_ds"]).groupby(id_col, sort=False)
+    }
+    ids = sorted(groups, key=str)
+    for cutoff in cutoffs:
+        expected = forecast_grid(cutoff, offset, horizon)
+        for series_id in ids:
+            group = groups[series_id]
+            violation = _classify_window(series_id, group, cutoff, expected, ctx, rolling=rolling)
+            if violation is None:
+                continue
+            if len(violations) < _MAX_SERIES_VIOLATIONS:
+                violations.append(violation)
+            else:
+                truncated += 1
     if truncated:
         violations.append(
             Violation(
                 code="FG-CUTOFF-099",
                 severity=Severity.INFO,
-                message=f"and {truncated} more series with holdout issues (output truncated)",
-                evidence={"truncated_series": truncated},
+                message=f"and {truncated} more series/window issues (output truncated)",
+                evidence={"truncated_windows": truncated},
             )
         )
     return violations
 
 
-def _classify_series(
+def _classify_window(
     series_id: object,
-    ds: pd.Series,
+    group: pd.DataFrame,
     cutoff: pd.Timestamp,
-    offset: pd.offsets.BaseOffset,
-    horizon: int,
+    expected: list[pd.Timestamp],
+    ctx: CheckContext,
+    *,
+    rolling: bool,
 ) -> Violation | None:
-    """Return the single most relevant violation for one series, or None if clean."""
-    train = ds[ds <= cutoff]
-    holdout = ds[ds > cutoff]
-
-    if train.empty:
+    spec = ctx.spec
+    if spec.cutoff_col is None and group.loc[group["_ds"].le(cutoff)].empty:
         return _series_violation(
             "FG-CUTOFF-002",
-            Severity.HIGH,
             series_id,
+            cutoff,
+            rolling,
             f"series {series_id!r} has no training rows at/before the cutoff",
-            {"min_ds": pd.Timestamp(ds.min()).isoformat()},
+            {"min_ds": pd.Timestamp(group["_ds"].min()).isoformat()},
         )
-    if holdout.empty:
+    selected = holdout_mask(spec, group, group["_ds"], cutoff, expected)
+    actual = [pd.Timestamp(value) for value in sorted(group.loc[selected, "_ds"].unique())]
+    if not actual:
+        evidence: dict[str, object] = {"cutoff": cutoff.isoformat()}
+        if spec.cutoff_col is None:
+            evidence["max_ds"] = pd.Timestamp(group["_ds"].max()).isoformat()
         return _series_violation(
             "FG-CUTOFF-003",
-            Severity.HIGH,
             series_id,
-            f"series {series_id!r} has no holdout rows after the cutoff "
-            f"(all rows are on/before {cutoff.isoformat()})",
-            {"max_ds": pd.Timestamp(ds.max()).isoformat()},
+            cutoff,
+            rolling,
+            f"series {series_id!r} has no holdout rows for cutoff {cutoff.isoformat()}",
+            evidence,
         )
-
-    expected = _grid(cutoff, offset, horizon)
-    actual = [pd.Timestamp(x) for x in sorted(holdout.unique())]
     if actual != expected:
-        return _holdout_mismatch(series_id, expected, actual, horizon)
+        return _holdout_mismatch(series_id, cutoff, expected, actual, rolling=rolling)
     return None
-
-
-def _grid(anchor: pd.Timestamp, offset: pd.offsets.BaseOffset, horizon: int) -> list[pd.Timestamp]:
-    """The ``horizon`` grid points strictly after ``anchor``: anchor+1·Δ … anchor+horizon·Δ."""
-    out: list[pd.Timestamp] = []
-    cur = anchor
-    for _ in range(horizon):
-        cur = cur + offset
-        out.append(pd.Timestamp(cur))
-    return out
 
 
 def _holdout_mismatch(
     series_id: object,
+    cutoff: pd.Timestamp,
     expected: list[pd.Timestamp],
     actual: list[pd.Timestamp],
-    horizon: int,
+    *,
+    rolling: bool,
 ) -> Violation:
-    """Describe how a series' holdout deviates from the expected horizon window."""
     missing = sorted(set(expected) - set(actual))
     unexpected = sorted(set(actual) - set(expected))
-    if len(actual) < horizon:
+    if len(actual) < len(expected):
         reason = "too_few"
-    elif len(actual) > horizon:
+    elif len(actual) > len(expected):
         reason = "too_many"
     else:
-        reason = "misaligned"  # right count, wrong timestamps (gap / off-grid)
+        reason = "misaligned"
     return _series_violation(
         "FG-CUTOFF-004",
-        Severity.HIGH,
         series_id,
-        f"series {series_id!r} holdout does not match {horizon} step(s) after the cutoff "
-        f"({reason})",
+        cutoff,
+        rolling,
+        f"series {series_id!r} holdout does not match {len(expected)} step(s) after the "
+        f"cutoff ({reason})",
         {
+            "cutoff": cutoff.isoformat(),
             "reason": reason,
-            "expected": [t.isoformat() for t in expected],
-            "actual": [t.isoformat() for t in actual],
-            "missing": [t.isoformat() for t in missing],
-            "unexpected": [t.isoformat() for t in unexpected],
+            "expected": [value.isoformat() for value in expected],
+            "actual": [value.isoformat() for value in actual],
+            "missing": [value.isoformat() for value in missing],
+            "unexpected": [value.isoformat() for value in unexpected],
         },
     )
 
 
 def _series_violation(
     code: str,
-    severity: Severity,
     series_id: object,
+    cutoff: pd.Timestamp,
+    rolling: bool,
     message: str,
     evidence: dict[str, object],
 ) -> Violation:
+    if rolling:
+        evidence = {**evidence, "cutoff": cutoff.isoformat()}
     return Violation(
         code=code,
-        severity=severity,
+        severity=Severity.HIGH,
         message=message,
-        location=str(series_id),
+        location=window_location(series_id, cutoff, rolling=rolling),
         evidence=evidence,
     )

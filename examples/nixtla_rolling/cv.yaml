@@ -1,0 +1,6 @@
+name: nixtla-cross-validation-output
+data: cv.csv
+cutoff_col: cutoff
+horizon: 2
+freq: D
+future_covariates: [promo]

@@ -38,7 +38,7 @@ Brainstorm → Spec → Plan → TDD → Implement → Review → Finalize. Plan
 - **Contract:** Pydantic v2 for all data structures (`ForecastSpec`, `Report`,
   `CheckResult`, `Violation`).
 - **CLI:** Click (`forecastguard run`).
-- **Data:** pandas (the dataframe checks); `pyarrow` optional extra for parquet.
+- **Data:** pandas (the dataframe checks); optional `parquet` and `nixtla` extras.
 - **Config:** PyYAML (`forecastguard.yaml` → `ForecastSpec`).
 - **Lint/format:** ruff. **Types:** mypy strict + pydantic plugin. **Tests:** pytest.
 - **Distribution:** PyPI package + composite GitHub Action (`action.yml`).
@@ -52,10 +52,9 @@ Brainstorm → Spec → Plan → TDD → Implement → Review → Finalize. Plan
 
 1. **Nixtla-native contract (D-001).** Default columns `unique_id`/`ds`/`y`;
    configurable on the spec; never hardcoded in a check.
-2. **Behavioural over source-parsing (D-003).** The leakage check perturbs and
-   diffs; it never parses user source. A leak-free feature at time `t` cannot
-   change when the future is hidden. The AST hint layer is a *later* explanation
-   aid, never the detector.
+2. **Behavioural verdicts; source explanation (D-003/D-018).** Leakage status
+   comes only from perturb-and-diff. AST inspection may annotate an established
+   failure with a likely source line; it never creates or suppresses a verdict.
 3. **Check protocol + stub pattern (D-004).** Every check implements `Check` and
    depends only on `CheckContext` — never on file IO. Ship a stub (loud SKIP)
    before the logic lands.

@@ -13,7 +13,9 @@ import sys
 import traceback
 from typing import TYPE_CHECKING, cast
 
+from forecastguard.adapters import inspect_mlforecast
 from forecastguard.checks import CheckContext, default_checks
+from forecastguard.explain import source_hints
 from forecastguard.models.report import CheckResult, Report
 
 if TYPE_CHECKING:
@@ -58,7 +60,28 @@ def build_context(spec: ForecastSpec) -> CheckContext:
     """Resolve a spec into a ready-to-check context (load frame, import feature_fn)."""
     frame = _load_frame(spec.data)
     feature_fn = _resolve_callable(spec.feature_fn) if spec.feature_fn else None
-    return CheckContext(spec=spec, frame=frame, feature_fn=feature_fn)
+    forecast_fn = _resolve_callable(spec.forecast_fn) if spec.forecast_fn else None
+    hints = []
+    if feature_fn is not None and spec.feature_fn is not None:
+        hints.extend(source_hints(feature_fn, spec.feature_fn, "feature"))
+    if forecast_fn is not None and spec.forecast_fn is not None:
+        hints.extend(source_hints(forecast_fn, spec.forecast_fn, "forecast"))
+    adapter_usage = None
+    adapter_error = None
+    if spec.adapter is not None:
+        try:
+            adapter_usage = inspect_mlforecast(spec, frame, _resolve_callable)
+        except Exception as exc:
+            adapter_error = f"{type(exc).__name__}: {exc}"
+    return CheckContext(
+        spec=spec,
+        frame=frame,
+        feature_fn=feature_fn,
+        forecast_fn=forecast_fn,
+        adapter_usage=adapter_usage,
+        adapter_error=adapter_error,
+        source_hints=hints,
+    )
 
 
 def run_checks(spec: ForecastSpec, checks: Sequence[Check] | None = None) -> Report:
