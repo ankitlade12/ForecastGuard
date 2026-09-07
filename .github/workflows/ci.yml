@@ -2,9 +2,8 @@ name: CI
 
 on:
   push:
-    branches: [ "main", "feat/complete-forecastguard-phases" ]
+    branches: [ "**" ]
   pull_request:
-    branches: [ "main" ]
 
 jobs:
   test:
