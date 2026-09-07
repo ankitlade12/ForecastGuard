@@ -18,6 +18,18 @@ inputs:
     description: "Optional PyPI version specifier to install (e.g. '==0.1.0'). Empty installs this action checkout."
     required: false
     default: ""
+  json-output:
+    description: "Path for the versioned JSON report artifact."
+    required: false
+    default: "forecastguard-report.json"
+  sarif-output:
+    description: "Path for the SARIF 2.1.0 report artifact."
+    required: false
+    default: "forecastguard-report.sarif"
+  artifact-name:
+    description: "Name of the uploaded JSON + SARIF artifact."
+    required: false
+    default: "forecastguard-report"
 
 runs:
   using: "composite"
@@ -44,9 +56,21 @@ runs:
       env:
         FG_SPEC: ${{ inputs.spec }}
         FG_STRICT: ${{ inputs.strict }}
+        FG_JSON_OUTPUT: ${{ inputs.json-output }}
+        FG_SARIF_OUTPUT: ${{ inputs.sarif-output }}
       run: |
+        args=(--spec "$FG_SPEC" --github --json-output "$FG_JSON_OUTPUT" --sarif-output "$FG_SARIF_OUTPUT")
         if [ "$FG_STRICT" = "true" ]; then
-          forecastguard run --spec "$FG_SPEC" --strict
-        else
-          forecastguard run --spec "$FG_SPEC"
+          args+=(--strict)
         fi
+        forecastguard run "${args[@]}"
+
+    - name: Upload ForecastGuard reports
+      if: ${{ always() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: |
+          ${{ inputs.json-output }}
+          ${{ inputs.sarif-output }}
+        if-no-files-found: error

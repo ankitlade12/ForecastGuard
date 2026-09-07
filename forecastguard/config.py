@@ -25,4 +25,13 @@ def load_spec(path: str | Path) -> ForecastSpec:
     spec = ForecastSpec.model_validate(raw)
     if not spec.data.is_absolute():
         spec = spec.model_copy(update={"data": (path.parent / spec.data).resolve()})
+    if (
+        spec.adapter is not None
+        and spec.adapter.model_path is not None
+        and not spec.adapter.model_path.is_absolute()
+    ):
+        adapter = spec.adapter.model_copy(
+            update={"model_path": (path.parent / spec.adapter.model_path).resolve()}
+        )
+        spec = spec.model_copy(update={"adapter": adapter})
     return spec

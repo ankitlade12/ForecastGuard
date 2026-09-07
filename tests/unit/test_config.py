@@ -33,3 +33,25 @@ def test_load_spec_rejects_non_mapping(tmp_path: Path) -> None:
     bad.write_text("- 1\n- 2\n", encoding="utf-8")
     with pytest.raises(ValueError, match="top-level mapping"):
         load_spec(bad)
+
+
+def test_load_spec_resolves_relative_adapter_model_path(tmp_path: Path) -> None:
+    (tmp_path / "data.csv").write_text("unique_id,ds,y\nA,2024-01-01,1\n", encoding="utf-8")
+    config = tmp_path / "forecastguard.yaml"
+    config.write_text(
+        "\n".join(
+            [
+                "data: data.csv",
+                'cutoff: "2024-01-01"',
+                "horizon: 1",
+                "freq: D",
+                "adapter:",
+                "  kind: mlforecast",
+                "  model_path: fitted-model",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    spec = load_spec(config)
+    assert spec.adapter is not None
+    assert spec.adapter.model_path == (tmp_path / "fitted-model").resolve()

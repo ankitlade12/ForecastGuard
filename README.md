@@ -5,13 +5,20 @@
 [![PyPI](https://img.shields.io/badge/pypi-forecastguard-blue.svg)](https://pypi.org/project/forecastguard/)
 [![Python versions](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://pypi.org/project/forecastguard/)
 [![CI](https://img.shields.io/badge/CI-github_actions-blue.svg)](.github/workflows/ci.yml)
-[![License](https://img.shields.io/badge/license-TBD-lightgrey.svg)](#license)
+[![License](https://img.shields.io/badge/license-Apache--2.0-green.svg)](LICENSE)
 
 **An open-source CLI and GitHub Action that validates your forecasting pipeline before its backtest is trusted. Three deliberately narrow checks — cutoff integrity, known-future covariates, and runtime leakage — catch the pipeline errors that silently inflate a backtest and trick automated model selection into shipping the wrong model. Nixtla-native (`unique_id` / `ds` / `y`), no hosted service.**
 
-Links: [Product spec](docs/ForecastGuard_PRD.md) | [Architecture](docs/ARCHITECTURE.md) | [Decisions](docs/DECISIONS.md) | [Roadmap](ROADMAP.md)
+Links: [Product spec](docs/ForecastGuard_PRD.md) | [Architecture](docs/ARCHITECTURE.md) | [Decisions](docs/DECISIONS.md) | [Competitive landscape](docs/COMPETITIVE_LANDSCAPE.md) | [Roadmap](ROADMAP.md)
 
-> **Status (v0.1).** All three checks are implemented and run end to end — **cutoff integrity** and **known-future covariates** (deterministic), and **runtime leakage** (behavioural perturbation, the moat). See [`examples/`](examples/) for clean→broken and leaky→clean pairs. Next is packaging and a first PyPI release (Slice 5, see the [Roadmap](ROADMAP.md)). Honest scope is a feature: ForecastGuard detects **common, high-impact** pipeline errors, not "all leakage."
+![ForecastGuard blocks future data from crossing the forecast cutoff](docs/assets/forecastguard-demo.gif)
+
+> **Status (v0.1 release candidate).** P0–P3 and Slice 5 are implemented locally:
+> rolling-origin/Nixtla CV validation, fitted MLForecast feature inspection,
+> feature- and forecast-level perturbation, point-in-time availability, source
+> hints, JSON/SARIF/GitHub output, public benchmarks, and a hardened Action.
+> External GitHub/PyPI publication still requires valid maintainer credentials.
+> ForecastGuard detects **common, high-impact** errors, not "all leakage."
 
 ## The problem
 
@@ -21,13 +28,18 @@ A model-selection agent watches SMAPE drop from 44 to 19, ranks that model #1, a
 
 | Check | Catches | How |
 |---|---|---|
-| **Cutoff integrity** | Validation rows on/before the cutoff; bad horizons; duplicate timestamps | Deterministic dataframe check — zero false positives |
-| **Known-future covariates** | Variables used at predict time that won't exist in production | Declared-vs-used contract diff |
-| **Runtime leakage** *(the moat)* | Feature engineering that reads across the cutoff (centered windows, full-frame scalers) | Behavioural perturbation — not source parsing |
+| **Cutoff integrity** | Bad single/rolling horizons; duplicate `(id, cutoff, ds)` keys; null IDs | Exact per-window grid validation |
+| **Known-future covariates** | Invalid declarations, incomplete coverage, late availability, undeclared MLForecast inputs | Declared + fitted-model contract validation |
+| **Runtime leakage** *(the moat)* | Centered/full-series features, actual-future exogenous use, teacher forcing | Feature and prediction perturbation — not source parsing |
 
 ### Why the leakage check is the moat
 
-**A leak-free feature at time `t` cannot change when the future is hidden.** ForecastGuard re-runs your feature function on future-masked data and diffs the pre-cutoff values. It proves leakage *behaviourally* — catching what code-parsing misses, and never false-positiving on a correctly-built trailing feature. When you give it only a finished frame (no callable feature function), it **skips loudly** rather than passing silently.
+**A causal feature or forecast cannot change when unavailable future inputs are
+hidden or perturbed.** ForecastGuard tests `nullify`, deterministic `noise`, and
+`sign_flip` modes across every origin. An observed change establishes future
+dependence behaviourally. AST hints may explain an already-proven failure, but
+never create a verdict. No observed change is bounded evidence for the tested
+windows, data, modes, and tolerance—not a universal proof.
 
 Try it: [`examples/runtime_leakage`](examples/runtime_leakage/) ships a `clean.yaml`
 and a `leaky.yaml` over the same data. The leaky one fails with two
@@ -59,6 +71,11 @@ horizon: 28
 freq: D
 future_covariates: [holiday, promo_planned]
 feature_fn: "myproject.features:build_features"   # optional; enables the leakage check
+forecast_fn: "myproject.forecast:predict"         # optional; (train, future) -> predictions
+perturbations: [nullify, noise, sign_flip]
+# For rolling raw history, replace cutoff with:
+# cutoffs: ["2024-05-31", "2024-06-30"]
+# For MLForecast CV output, use: cutoff_col: cutoff
 ```
 
 Run the gate:
@@ -77,6 +94,16 @@ forecastguard run --spec forecastguard.yaml
          - no feature_fn declared in spec — nothing to perturb
 
   PASS - exit 0
+```
+
+For CI systems and other programmatic consumers, emit the versioned typed
+report as JSON (stdout contains JSON only; the process exit code remains the
+gate):
+
+```bash
+forecastguard run --spec forecastguard.yaml --format json
+forecastguard run --spec forecastguard.yaml \
+  --json-output report.json --sarif-output report.sarif --github
 ```
 
 When the data is malformed, the cutoff check fails the run (exit 1) with
@@ -107,7 +134,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: ankitlade12/ForecastGuard@v0   # composite action; wraps the CLI
+      - uses: ankitlade12/ForecastGuard@v0   # after the first GitHub release
         with:
           spec: forecastguard.yaml
           strict: "true"
@@ -156,19 +183,22 @@ action.yml       # composite GitHub Action wrapping the CLI
 
 - Detects **common, high-impact** pipeline errors before backtests are trusted —
   **not** "all leakage."
-- The runtime-leakage check needs a **callable feature function**; given only a
-  finished frame it **skips loudly**, never silently.
+- Runtime leakage needs a callable `feature_fn` and/or `forecast_fn`; a finished
+  frame alone **skips loudly**, never silently.
+- `cutoff_col` CV output validates structure and availability, but cannot run
+  behavioural perturbation without raw training history.
 - Not a drift monitor, not a forecasting library, not a SaaS — a local trust gate.
 
 ## Roadmap
 
-See [ROADMAP.md](ROADMAP.md). All three checks are live; next up is Slice 5 —
-ship: GitHub Action hardening, a Nixtla `cross_validation` tutorial, and a first
-PyPI release.
+See [ROADMAP.md](ROADMAP.md). The feature branch is undergoing reliability and
+adoption review before publication. The [rolling tutorial](docs/tutorials/nixtla-rolling.md)
+includes a real MLForecast runtime integration, call-budget controls, and a
+reproducible overhead measurement.
 
 ## License
 
-**TBD.** A license has not been chosen yet for this repository.
+Licensed under the [Apache License 2.0](LICENSE).
 
 ## Contributing
 

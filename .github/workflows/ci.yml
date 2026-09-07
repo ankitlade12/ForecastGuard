@@ -2,9 +2,8 @@ name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "**" ]
   pull_request:
-    branches: [ "main" ]
 
 jobs:
   test:
@@ -32,10 +31,32 @@ jobs:
           uv run --extra dev --python ${{ matrix.python-version }} ruff format --check forecastguard/ tests/
 
       - name: Type-check (mypy strict)
-        run: uv run --extra dev --python ${{ matrix.python-version }} mypy forecastguard/
+        run: uv run --extra dev --python ${{ matrix.python-version }} mypy forecastguard/ tests/
 
       - name: Test (pytest)
-        run: uv run --extra dev --python ${{ matrix.python-version }} pytest
+        run: uv run --extra dev --python ${{ matrix.python-version }} pytest --cov=forecastguard --cov-report=term-missing
+
+      - name: Build distributions
+        run: uv build
+
+      - name: Real MLForecast integration
+        run: uv run --extra dev --extra nixtla --python ${{ matrix.python-version }} pytest tests/integration/test_mlforecast_real.py
+
+      - name: Verify wheel and sdist metadata
+        run: uvx twine check dist/*
+
+      - name: Action-equivalent CLI smoke
+        run: |
+          uv run --extra dev --python ${{ matrix.python-version }} forecastguard run \
+            --spec examples/runtime_leakage/clean.yaml --strict --github \
+            --json-output forecastguard-report.json \
+            --sarif-output forecastguard-report.sarif
+
+      - name: Upload smoke reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: forecastguard-${{ matrix.python-version }}
+          path: forecastguard-report.*
 
   conclude:
     name: conclude

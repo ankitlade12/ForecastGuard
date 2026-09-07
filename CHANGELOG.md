@@ -7,6 +7,20 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Fixed
+- Runtime probes isolate in-place functions and snapshot reused output buffers.
+  Empty, partial, missing, or non-finite baseline forecasts cannot pass.
+- A later unsupported perturbation no longer erases established leakage; partial
+  failures remain visible in every report format.
+- CV series may use different origins, and covariates may share an availability
+  timestamp. Integer-valued inputs support numeric noise perturbations.
+- Mutation benchmark controls require PASS rather than accepting any non-FAIL.
+- `--format json --github` keeps annotations off JSON stdout.
+- Null series identifiers now fail cutoff integrity with `FG-CUTOFF-014`
+  instead of being dropped by dataframe grouping and producing a zero-series
+  PASS.
+- Declared future covariates now require complete coverage across available
+  holdout rows (`FG-FUTURE-003`), and static declarations must exist and remain
+  invariant within each series (`FG-STATIC-001/002`).
 - `CutoffIntegrityCheck` now treats a missing declared `target_col` as a
   structural dataset error (`FG-CUTOFF-010`) instead of allowing a run to exit
   successfully against an incomplete ForecastGuard contract.
@@ -15,11 +29,39 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   full/repeat/masked runs, instead of passing after a zero-row perturbation diff.
 
 ### Changed
+- Default execution validates inputs before loading user code, with shared
+  comparison and window preparation. `max_probe_calls` caps planned runtime
+  executions; oversized plans skip before running probes.
+- Source hints remain possible explanations in evidence rather than asserted
+  source locations. A real MLForecast runtime example measures integration cost.
+- Runtime PASS summaries now report bounded evidence (no sensitivity detected
+  for the tested cutoff, mask, data, and tolerance) instead of claiming a
+  universal proof that features are leak-free.
+- `ForecastSpec` rejects duplicate or overlapping column-role declarations.
+- The project is now licensed under Apache-2.0.
 - The composite GitHub Action now installs ForecastGuard from the action checkout
   by default, with the `version` input reserved for explicitly testing a
   published PyPI version.
 
 ### Added
+- Rolling-origin raw history (`cutoffs`) and Nixtla CV-output (`cutoff_col`)
+  contracts with structured per-window evidence.
+- Optional MLForecast adapter inspection of `ts.features_order_`; consumed raw
+  exogenous inputs must be declared future/static (`FG-FUTURE-004`).
+- Forecast-level behavioural perturbation through
+  `forecast_fn(train_df, future_df)`, detecting unavailable exogenous inputs and
+  teacher forcing as `FG-FORECAST-001`.
+- Deterministic `nullify`, `noise`, and `sign_flip` perturbations with a seed.
+- Point-in-time availability timestamps (`FG-AVAIL-001/002`) at historical
+  event time and every forecast origin.
+- Explanation-only AST source hints, SARIF 2.1.0, GitHub annotations and step
+  summaries, plus JSON/SARIF Action artifacts.
+- Public 7-case mutation corpus (7/7) and scale benchmark. The optimized pandas
+  cutoff path processed 365,000 rows at ~171k rows/s on the reference machine;
+  Polars is therefore deferred.
+- Runnable rolling/Nixtla tutorial and real optional MLForecast integration.
+- Versioned report serialization (`schema_version: "1.0"`) and
+  `forecastguard run --format json` for machine-readable CI output.
 - Integration coverage now exercises the advertised broken/clean examples for
   cutoff integrity, known-future covariates, and runtime leakage.
 - **Slice 4 — Runtime-leakage check (the moat).** `RuntimeLeakageCheck` is now
@@ -30,7 +72,7 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `examples/runtime_leakage` (leaky→clean) demo and 10 unit tests. Semantics:
   DECISIONS D-013. **All three checks are now implemented.**
 - **Slice 3 — Known-future-covariates check.** `KnownFutureCovariatesCheck` is
-  now implemented (declared-vs-used contract diff): `FG-FUTURE-001`
+  now implemented (declared availability contract): `FG-FUTURE-001`
   (declared covariate not a column) and `FG-FUTURE-002` (declared covariate empty
   across the holdout); undeclared covariates surfaced as past-only. Ships with
   `examples/known_future` (clean→broken) and 8 unit tests. Semantics: DECISIONS
@@ -46,10 +88,8 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Docs (PRD, ARCHITECTURE, DECISIONS D-001…D-013), agent instructions, OSS
   hygiene files, CI + PyPI publish workflows, and the composite GitHub Action.
 
-### Not yet (Slice 5 — Ship)
-- Remaining GitHub Action release validation + README GIF; a Nixtla
-  `cross_validation` tutorial PR.
-- A chosen license (see README → License).
-- First PyPI release.
+### Release status
+- All local P0–P3 and Slice 5 gates are complete. The first GitHub/PyPI release
+  awaits valid maintainer authentication and trusted-publisher setup.
 
 [Unreleased]: https://github.com/ankitlade12/ForecastGuard/commits/main

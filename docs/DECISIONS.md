@@ -183,9 +183,8 @@ PASS summary, never as failures. Timestamp/cutoff parsing problems are owned by
 the cutoff check (D-011); the known-future check declines to evaluate holdout
 coverage rather than double-reporting.
 
-**Out of scope (honest):** partial holdout coverage (a declared future covariate
-populated for some series but not others) is not yet flagged; revisit if a real
-workflow needs per-series future-coverage strictness.
+Partial holdout coverage was originally out of scope and is now validated by
+`FG-FUTURE-003` under D-014.
 
 ---
 
@@ -221,3 +220,109 @@ of changed `(id, ds)` rows and their full-vs-masked values.
 **Out of scope (honest):** sub-tolerance leaks; leaks that don't move any value on
 the available pre-cutoff rows; and per-window rolling-origin (multi-cutoff)
 masking.
+
+---
+
+### D-014 — Bounded perturbation claims and a stricter availability contract
+**2026-08-30 · Accepted**
+
+Runtime leakage is a one-sided behavioural test. If censoring future-unknown
+inputs changes a pre-cutoff feature, that change establishes a dependency on
+future information. If nothing changes, the result means only that no
+sensitivity was detected for the tested cutoff, mask, data, and numeric
+tolerance. PASS summaries and current product documentation use this bounded
+language; they do not claim a universal proof of no leakage. This qualification
+supersedes absolute wording in D-002/D-003 without changing behavioural
+perturbation as the detector.
+
+The availability contract is also tightened before runtime masking trusts it:
+
+- null series identifiers fail as `FG-CUTOFF-014`;
+- declared future/static roles may not overlap reserved columns or each other;
+- duplicate role declarations are rejected at the typed spec boundary;
+- declared static columns must exist (`FG-STATIC-001`) and remain invariant
+  within each series (`FG-STATIC-002`);
+- declared future columns require complete coverage across available holdout
+  rows (`FG-FUTURE-003` for partial coverage; `FG-FUTURE-002` for none).
+
+Serialized reports carry `schema_version = "1.0"`; `--format json` writes only
+that report to stdout while retaining the same exit-code gate.
+
+**Why:** trust requires both high-precision failures and honest PASS semantics.
+The runtime mask must not preserve a column merely because an invalid static or
+future declaration told it to do so, and CI consumers need a stable structured
+contract rather than scraping terminal text.
+
+---
+
+### D-015 — One explicit validation-window source
+**2026-08-30 · Accepted**
+
+`ForecastSpec` requires exactly one of `cutoff`, `cutoffs`, or `cutoff_col`.
+Legacy `cutoff` retains its all-post-cutoff holdout semantics. Rolling raw
+history bounds every origin to `horizon` grid points, allowing later history in
+the same frame. `cutoff_col` validates materialized Nixtla CV output by unique
+`(id, cutoff, ds)` keys and exact per-series grids. Every rolling violation
+carries its origin in `location` and structured evidence.
+
+**Why:** a forecasting gate that only checks one split does not protect the
+rolling-origin evidence model-selection systems actually consume. Explicit
+mutually-exclusive shapes avoid guessing.
+
+---
+
+### D-016 — Fitted MLForecast usage closes the declaration gap
+**2026-08-30 · Accepted**
+
+The optional MLForecast adapter obtains a fitted object from `model_path` or
+`model_fn` and intersects `ts.features_order_` with raw dataframe columns. A raw
+feature the model consumes but the spec does not declare future/static fails as
+`FG-FUTURE-004`. Adapter loading remains at the runner IO boundary; checks see
+only typed `AdapterUsage` or a loud adapter error.
+
+**Why:** presence and user declarations alone cannot prove what the fitted model
+uses. Framework evidence makes that contract checkable without coupling checks
+to model IO.
+
+---
+
+### D-017 — Forecast outputs are a second behavioural boundary
+**2026-08-30 · Accepted**
+
+An optional `forecast_fn(train_df, future_df)` is run twice for determinism and
+then against contract-aware future perturbations. Prediction changes fail as
+`FG-FORECAST-001`, with origin, mode, prediction column, and row samples. This
+catches direct actual-future exogenous use and teacher forcing that may not
+appear in a standalone feature function. It remains a component of the third
+registered check, preserving the three-check public architecture.
+
+---
+
+### D-018 — Availability is point-in-time; AST is explanation only
+**2026-08-30 · Accepted**
+
+Future covariates can declare an explicit availability timestamp column. A
+value must be available by its historical event time and by every forecast
+origin where it is consumed (`FG-AVAIL-001/002`). Runtime probes support seeded
+`nullify`, `noise`, and `sign_flip` modes. AST inspection recognizes a small set
+of risky constructs only after behavioural sensitivity exists and may add a
+file/line hint; it never affects status.
+
+**Why:** point-in-time truth removes ambiguity around values such as actual
+weather, while multiple deterministic interventions improve behavioural
+evidence. Keeping source parsing non-authoritative preserves D-003.
+
+---
+
+### D-019 — One Report, multiple CI renderers; pandas remains the backend
+**2026-08-30 · Accepted**
+
+Human output, versioned JSON, SARIF 2.1.0, GitHub annotations, and the step
+summary all render the same typed `Report`; the exit code remains the gate. The
+public mutation corpus currently scores 7/7. After replacing repeated full-frame
+series filtering with one grouping pass, the reference scale run processed
+365,000 rows in 2.14s (~171k rows/s), above the recorded 50k rows/s threshold.
+Polars is therefore not added.
+
+**Why:** CI integrations must not develop divergent verdict logic, and another
+dataframe backend is complexity without measured need.

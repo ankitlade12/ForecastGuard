@@ -1,0 +1,9 @@
+name: nixtla-rolling-runtime
+data: data.csv
+cutoffs: ["2024-01-04", "2024-01-06"]
+horizon: 2
+freq: D
+future_covariates: [promo]
+forecast_fn: "examples.nixtla_rolling.mlforecast_tutorial:forecast"
+perturbations: [nullify]
+max_probe_calls: 6

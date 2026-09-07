@@ -3,8 +3,8 @@
 Validates a Nixtla-native forecasting pipeline (``unique_id`` / ``ds`` / ``y``)
 *before* its backtest is trusted, via three deliberately narrow checks:
 
-1. **Cutoff integrity** — deterministic dataframe validation (zero false positives)
-2. **Known-future covariates** — declared-vs-used contract diff
+1. **Cutoff integrity** — deterministic dataframe validation
+2. **Known-future covariates** — declared availability contract validation
 3. **Runtime leakage** — behavioural perturbation (the moat)
 
 See ``docs/ForecastGuard_PRD.md`` for the product spec and
@@ -18,12 +18,14 @@ from forecastguard.models.report import (
     Severity,
     Violation,
 )
-from forecastguard.models.spec import ForecastSpec
+from forecastguard.models.spec import AvailabilitySpec, ForecastSpec, MLForecastAdapterSpec
 
 __all__ = [
+    "AvailabilitySpec",
     "CheckResult",
     "CheckStatus",
     "ForecastSpec",
+    "MLForecastAdapterSpec",
     "Report",
     "Severity",
     "Violation",

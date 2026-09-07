@@ -1,57 +1,63 @@
-# Handoff: Slice 4 (Runtime leakage) Closed — all three checks live
+# Handoff: P0–P3 and Slice 5 complete locally
 
-**Date:** 2026-06-14
-**Branch:** _(git not initialized yet — owner's choice)_
+**Date:** 2026-08-30
+
+**Branch:** `main`
+
 **Project root:** `/Users/ankithemantlade/Desktop/forecast_library`
 
 ## Status
 
-Slices 1–4 are closed. **All three checks from the ForecastGuard one-pager are
-implemented** to a zero-false-positive bar:
+All planned local product phases are complete. The public architecture remains
+exactly three checks; rolling/Nixtla, fitted-model evidence, feature/forecast
+perturbation, point-in-time availability, explanation hints, CI renderers,
+benchmarks, Action hardening, tutorial, and release automation are implemented.
+Semantics are recorded in DECISIONS D-014 through D-019.
 
-- **Cutoff integrity** (Slice 2) — deterministic dataframe validation.
-- **Known-future covariates** (Slice 3) — declared-vs-used contract diff.
-- **Runtime leakage** (Slice 4, the moat) — behavioural perturbation.
+## Delivered
 
-The product is functionally complete; remaining work is packaging/distribution
-(Slice 5).
+- `FG-CUTOFF-014` rejects null series identifiers.
+- `ForecastSpec` rejects duplicate and overlapping column roles.
+- `FG-STATIC-001/002` validate declared static columns.
+- `FG-FUTURE-003` requires complete future-covariate coverage across available
+  holdout rows and reports affected series/sample timestamps.
+- `Report.schema_version` is `"1.0"`; `--format json` emits only the typed report
+  while preserving normal and `--strict` exit semantics.
+- Runtime PASS summaries say no sensitivity was detected for the tested cutoff,
+  mask, and tolerance; they no longer claim universal proof of no leakage.
+- Apache-2.0 license and package metadata are present.
+- The sdist excludes internal agent metadata and handoff artifacts.
+- `cutoffs` and `cutoff_col` cover rolling raw history and Nixtla CV output.
+- The optional MLForecast adapter detects undeclared raw consumed inputs.
+- `forecast_fn` catches actual-weather use and teacher forcing.
+- `nullify`, deterministic `noise`, and `sign_flip` are supported.
+- Availability timestamps are checked at event time and every forecast origin.
+- AST hints only explain behavioural failures.
+- JSON, SARIF, GitHub annotations/summary, and Action artifacts share one Report.
+- The public mutation corpus is 7/7; pandas processes 365k rows in ~2.14s
+  (~171k rows/s), so Polars is deferred.
 
-## What Landed In Slice 4
+## Verification
 
-- `RuntimeLeakageCheck` (replaces the stub) in
-  `forecastguard/checks/runtime_leak.py`: contract-aware future masking +
-  determinism probe + pre-cutoff diff → `FG-LEAK-001`. Semantics: DECISIONS
-  **D-013**.
-- `feature_fn` import resolution: working dir (`runner`) + spec dir (`cli`) added
-  to `sys.path`. `numpy.*` added to the mypy override.
-- 10 unit tests in `tests/unit/test_runtime_leak.py` (incl. the zero-FP
-  declared-future-covariate case and every loud-skip branch).
-- The headline demo: `examples/runtime_leakage/` (`features.py`, `data.csv`,
-  `clean.yaml`, `leaky.yaml`, README).
-- Docs updated: DECISIONS D-013, `docs/plans/2026-06-14-slice-4-runtime-leakage.md`,
-  ROADMAP, CHANGELOG, README, `examples/README.md`.
+- Python 3.12: 117 passed, including the real MLForecast integration with the
+  `nixtla` extra. Python 3.13: 116 passed, 1 optional Nixtla test skipped because
+  that isolated CI-equivalent environment intentionally installed only dev deps.
+- Ruff check/format and mypy strict: clean.
+- Wheel and sdist build successfully; wheel metadata contains the Apache-2.0
+  expression and license file.
+- Clean temporary installation succeeded against current runtime dependencies,
+  including pandas 3.0.5 and Pydantic 2.13.5.
+- The rolling raw-history and generated real MLForecast CV tutorial both run.
 
-## Verification (fresh)
+## External release blocker
 
-```bash
-uv run pytest                                              # 53 passed
-uv run ruff check forecastguard/ tests/                   # clean
-uv run ruff format --check forecastguard/ tests/
-uv run mypy forecastguard/                                 # Success (strict)
-uv run forecastguard run --spec examples/runtime_leakage/clean.yaml   # exit 0 (all 3 PASS)
-uv run forecastguard run --spec examples/runtime_leakage/leaky.yaml   # exit 1 (FG-LEAK-001 ×2)
-```
+- `gh auth status` reports invalid credentials for GitHub.com and the configured
+  enterprise host. Re-authenticate before creating/pushing the public release.
+- Configure PyPI trusted publishing, then publish/tag `v0.1.0` and validate the
+  released composite Action. Local workflows/artifacts are ready.
 
-All seven example specs across the four slices exit as designed.
+## Next action
 
-## Open Decisions For The Owner
-
-- **LICENSE** still intentionally absent (owner chose "no license yet").
-- **git** not initialized (owner's choice); `.gitignore` + pre-commit ready.
-
-## Next — Slice 5 (Ship)
-
-- Harden the composite GitHub Action; add a README GIF.
-- Write a Nixtla `cross_validation` tutorial PR (the GTM wedge, PRD §5).
-- Choose a license; first PyPI release (the `publish.yml` trusted-publishing flow
-  is ready).
+Re-authenticate GitHub and configure the PyPI trusted publisher; then execute the
+existing release workflow. Do not start another product phase before publication
+feedback supplies evidence for it.

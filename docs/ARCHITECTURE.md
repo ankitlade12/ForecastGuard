@@ -18,12 +18,47 @@ judgment that fills gaps or evolves beyond the PRD.
 
 ## Data flow
 
+The default runner validates structure and declared covariates before importing
+user code. Failed prerequisites produce a runtime SKIP and a failing gate. Only
+valid inputs reach optional model inspection, then budgeted runtime execution.
+Explicit custom check sequences retain the caller's order and prerequisites.
+
+Behavioural probes share output indexing, numeric tolerances, evidence sampling,
+and result aggregation in `checks/comparison.py`. `CheckContext.windows` lazily
+prepares timestamps and origin grids once for feature and forecast probes; masks
+are generated per origin to avoid retaining a full dataframe per window.
+
+### Verdict contract
+
+| Status | Meaning | Gate |
+|---|---|---|
+| PASS | Requested comparisons completed; no violation observed under the declared inputs, windows, modes and tolerance | Exit 0 |
+| FAIL | At least one violation was established; `detail` also preserves incomplete probes | Exit 1 |
+| SKIPPED | Missing prerequisites, invalid callable output, nondeterminism, unsupported probes, or exceeded call budget prevented a complete verdict | Exit 1 with `--strict`, otherwise 0 |
+| ERROR | An unexpected execution failure prevented evaluation | Exit 1 |
+
+Runtime feature outputs may omit warm-up rows but need nonempty, unique,
+consistent keys. Forecast outputs must cover every series and horizon timestamp
+exactly once, with finite numeric baseline predictions. Inputs and output
+snapshots are isolated between executions. Callables must not depend on mutable
+external state: dataframe copies do not isolate globals, files, or model caches.
+
+A later skipped probe cannot erase a previous violation. Every configured mode
+continues when another mode is unsupported. JSON, human output, GitHub summaries
+and SARIF retain incomplete details alongside failures. Source hints remain
+possible explanations in evidence, not asserted violation locations.
+
+CV-output validation checks existing `(series, cutoff)` pairs, allowing different
+origins per series. It cannot discover an entirely omitted series/window without
+an external roster of expected pairs.
+
 ```
 forecastguard.yaml
       │  config.load_spec()
       ▼
   ForecastSpec ───────────────► runner.build_context()
-                                      │  (load frame, import feature_fn)
+                                      │  (load frame; resolve feature/forecast
+                                      │   callables, adapter evidence, AST hints)
                                       ▼
                                  CheckContext
                                       │  runner.run_checks()
@@ -33,7 +68,7 @@ forecastguard.yaml
      Check             CovariatesCheck        Check (the moat)
             └──────────────┴──────────┬───────────┘
                                       ▼
-                                   Report ──► cli._render() + exit code
+                                   Report ──► human / JSON / SARIF / GitHub + exit code
 ```
 
 ## Module layout
@@ -42,12 +77,21 @@ forecastguard.yaml
 forecastguard/
 ├── models/
 │   ├── spec.py          # ForecastSpec — the declared input contract
-│   └── report.py        # Report, CheckResult, Violation, Severity, CheckStatus
+│   ├── report.py        # Report, CheckResult, Violation, Severity, CheckStatus
+│   ├── adapter.py       # fitted-framework consumed-feature evidence
+│   └── hint.py          # explanation-only source locations
 ├── checks/
 │   ├── protocol.py      # Check protocol + CheckContext (the run bundle)
 │   ├── cutoff.py        # Check 1 — deterministic dataframe validation
-│   ├── known_future.py  # Check 2 — declared-vs-used covariate diff
-│   └── runtime_leak.py  # Check 3 — behavioural perturbation (the moat)
+│   ├── known_future.py  # Check 2 — declared availability contract
+│   ├── runtime_leak.py  # Check 3 — feature perturbation + aggregation
+│   └── forecast_leak.py # forecast-output perturbation component
+├── adapters/
+│   └── mlforecast.py    # optional ts.features_order_ introspection
+├── windows.py           # shared single/rolling/CV window semantics
+├── perturb.py           # nullify/noise/sign_flip contract-aware inputs
+├── explain.py           # AST hints after behavioural proof only
+├── render.py            # SARIF + GitHub renderers over typed Report
 ├── runner.py            # build_context + run_checks (orchestration + IO)
 ├── config.py            # load_spec (YAML -> validated ForecastSpec)
 └── cli.py               # Click entry point: `forecastguard run`
@@ -63,9 +107,9 @@ docs/                    # PRD, ARCHITECTURE, DECISIONS, plans
 1. **Nixtla-native contract (D-001).** The data shape is `unique_id` / `ds` /
    `y` by default. Column names are configurable on the spec, never hardcoded in
    a check.
-2. **Behavioural over source-parsing (D-003).** The leakage check perturbs and
-   diffs; it does not parse the user's source. This is what catches leaks that
-   AST analysis misses and avoids false positives on correct trailing features.
+2. **Behavioural verdicts, source explanation (D-003/D-018).** Leakage verdicts
+   come only from perturb-and-diff. AST inspection can annotate a proven failure
+   with a likely source line; it never creates or suppresses a verdict.
 3. **Check protocol + stub pattern (D-004).** Every check implements `Check` and
    depends only on `CheckContext` — never on file IO. A check ships as a stub
    first (loud SKIP) so the runner and CLI are buildable and testable before the
@@ -85,7 +129,10 @@ docs/                    # PRD, ARCHITECTURE, DECISIONS, plans
 - **contract** — every check satisfies the `Check` protocol; the registry stays
   consistent. (The protocol analogue of GoldMind's connector parity tests.)
 - **integration** — `runner.run_checks` + the CLI run end to end against a fixed
-  example and produce the expected report and exit code.
+  example and produce the expected report and exit code; the optional Nixtla
+  extra runs a real fitted-MLForecast adapter test.
+- **public benchmarks** — mutation controls establish detector recall on seeded
+  cases; a JSON scale probe records whether a new backend is justified.
 
 Quality gates are commit-time (pre-commit: ruff + mypy + unit tier) plus the CI
 workflow (`.github/workflows/ci.yml`) on push/PR.

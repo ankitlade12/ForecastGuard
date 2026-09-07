@@ -38,7 +38,7 @@ repos:
     rev: v1.14.0
     hooks:
       - id: mypy
-        additional_dependencies: [pydantic>=2.0, types-PyYAML]
+        additional_dependencies: [pydantic>=2.0, types-PyYAML, 'click>=8.1,<9']
         files: ^forecastguard/
 
   # Local — pytest unit tier (fast). Run on every commit.

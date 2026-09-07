@@ -1,39 +1,20 @@
-"""Check 3 — Runtime leakage (behavioural perturbation). The moat.
+"""Feature and forecast sensitivity to unavailable future inputs.
 
-A leak-free feature at time ``t`` cannot change when the future is hidden.
-ForecastGuard builds a *future-masked* copy of the data — future-row targets and
-undeclared (past-only) covariates set to NaN, while declared ``future_covariates``
-and ``static_covariates`` are kept (they're genuinely known at predict time) —
-re-runs ``spec.feature_fn`` on it, and diffs the **pre-cutoff** feature values
-against the same features computed on the full frame. Any pre-cutoff value that
-moves read across the cutoff: centered windows, full-frame scalers, whole-series
-target encoders, and the like.
-
-It proves leakage *behaviourally* (D-003): it catches what source parsing misses
-and never false-positives on a correctly-built trailing feature — or on a
-forward-looking feature over a *declared* known-future covariate (that column is
-preserved in the mask). See DECISIONS D-013.
-
-Honest scope — this check SKIPS LOUDLY (never passes silently) whenever it can't
-prove anything: no ``feature_fn``; no holdout to hide; the function raising; an
-output it can't align; or a nondeterministic ``feature_fn``.
-
-Violation: ``FG-LEAK-001`` — a feature changes before the cutoff when the future
-is hidden (CRITICAL), one per leaking feature column.
-"""
+Compare isolated executions at each configured origin. A detected dependency is
+FAIL; incomplete probes remain visible. PASS is bounded to the tested inputs,
+windows, modes and tolerances."""
 
 from __future__ import annotations
 
-import numpy as np
 import pandas as pd
-from pandas.api.types import is_numeric_dtype
 
+from forecastguard.checks.comparison import aggregate, indexed_output, same_shape
+from forecastguard.checks.comparison import changed_columns as _changed_columns
+from forecastguard.checks.forecast_leak import ForecastPerturbationCheck
 from forecastguard.checks.protocol import CheckContext
-from forecastguard.models.report import CheckResult, Severity, Violation
-
-_NUM_RTOL = 1e-5
-_NUM_ATOL = 1e-8
-_SAMPLE = 5  # changed rows recorded as evidence per leaking feature
+from forecastguard.models.report import CheckResult, CheckStatus, Severity, Violation
+from forecastguard.models.spec import ForecastSpec
+from forecastguard.perturb import perturb_unknowns
 
 
 class RuntimeLeakageCheck:
@@ -43,20 +24,68 @@ class RuntimeLeakageCheck:
     name = "Runtime leakage"
 
     def run(self, ctx: CheckContext) -> CheckResult:
+        """Aggregate configured feature- and forecast-level perturbations."""
+        budget = self.check_budget(
+            ctx, int(ctx.feature_fn is not None) + int(ctx.forecast_fn is not None)
+        )
+        if budget is not None:
+            return budget
+        components: list[CheckResult] = []
+        if ctx.feature_fn is not None:
+            components.append(self._run_feature(ctx))
+        if ctx.forecast_fn is not None:
+            components.append(ForecastPerturbationCheck().run(ctx))
+        if not components:
+            return self._skip("no feature_fn or forecast_fn declared in spec — nothing to perturb")
+
+        result = aggregate(components, "; ".join(part.summary for part in components))
+        if result.status is CheckStatus.PASS:
+            result.summary = "no future sensitivity detected; " + result.summary
+        return result
+
+    def check_budget(self, ctx: CheckContext, callable_count: int) -> CheckResult | None:
+        spec = ctx.spec
+        if spec.max_probe_calls is None or spec.cutoff_col is not None or not callable_count:
+            return None
+        calls = len(ctx.windows.origins) * (2 + len(spec.perturbations)) * callable_count
+        if calls > spec.max_probe_calls:
+            return self._skip(
+                f"runtime requires up to {calls} callable executions; "
+                f"max_probe_calls={spec.max_probe_calls}; no probes executed"
+            )
+        return None
+
+    def _run_feature(self, ctx: CheckContext) -> CheckResult:
         spec = ctx.spec
         frame = ctx.frame
-        feature_fn = ctx.feature_fn
-
-        if feature_fn is None:
+        if ctx.feature_fn is None:
             return self._skip("no feature_fn declared in spec — nothing to perturb")
         if spec.id_col not in frame.columns or spec.time_col not in frame.columns:
             return self._skip("id/time column missing (the cutoff check reports this)")
+        if spec.cutoff_col is not None:
+            return self._skip(
+                "cutoff_col input contains validation output, not raw history — "
+                "runtime perturbation cannot compare pre-cutoff features"
+            )
 
         try:
-            ds = pd.to_datetime(frame[spec.time_col], errors="raise")
-            cutoff = pd.Timestamp(spec.cutoff)
-        except (ValueError, TypeError):
+            cutoffs = [cutoff for cutoff, _ in ctx.windows.origins]
+        except (ValueError, TypeError, KeyError):
             return self._skip("can't parse timestamps/cutoff (the cutoff check reports this)")
+
+        rolling = bool(spec.cutoffs)
+        results = [self._run_window(ctx, cutoff, rolling=rolling) for cutoff in cutoffs]
+        return aggregate(
+            results,
+            f"feature probes: {len(cutoffs)} window(s), {len(spec.perturbations)} mode(s) requested",
+        )
+
+    def _run_window(self, ctx: CheckContext, cutoff: pd.Timestamp, *, rolling: bool) -> CheckResult:
+        spec = ctx.spec
+        frame = ctx.frame
+        feature_fn = ctx.feature_fn
+        assert feature_fn is not None
+        ds = ctx.windows.timestamps
 
         future_mask = ds > cutoff
         if not bool(future_mask.any()):
@@ -64,34 +93,24 @@ class RuntimeLeakageCheck:
         if not bool((ds <= cutoff).any()):
             return self._skip("no pre-cutoff rows to compare")
 
-        masked = _mask_future(frame, spec, future_mask)
-
         try:
-            full_a = feature_fn(frame)
-            full_b = feature_fn(frame)
-            masked_out = feature_fn(masked)
+            full_pre = _pre_cutoff_features(feature_fn(frame.copy(deep=True)), spec, cutoff)
+            repeat_pre = _pre_cutoff_features(feature_fn(frame.copy(deep=True)), spec, cutoff)
         except Exception as exc:
             return self._skip(
                 f"feature_fn raised ({type(exc).__name__}: {exc}) — cannot prove leakage"
             )
 
-        full_pre = _pre_cutoff_features(full_a, spec, cutoff)
-        repeat_pre = _pre_cutoff_features(full_b, spec, cutoff)
-        masked_pre = _pre_cutoff_features(masked_out, spec, cutoff)
-        if full_pre is None or repeat_pre is None or masked_pre is None:
+        if full_pre is None or repeat_pre is None:
             return self._skip(
                 "feature_fn output must be a DataFrame with unique "
                 f"({spec.id_col}, {spec.time_col}) rows including those columns"
             )
-        if full_pre.empty or repeat_pre.empty or masked_pre.empty:
+        if full_pre.empty or repeat_pre.empty:
             return self._skip("feature_fn output has no comparable pre-cutoff rows")
-        if not full_pre.index.equals(repeat_pre.index) or not full_pre.index.equals(
-            masked_pre.index
-        ):
+        if not full_pre.index.equals(repeat_pre.index):
             return self._skip("feature_fn output pre-cutoff rows do not align")
-        if set(full_pre.columns) != set(repeat_pre.columns) or set(full_pre.columns) != set(
-            masked_pre.columns
-        ):
+        if set(full_pre.columns) != set(repeat_pre.columns):
             return self._skip("feature_fn output feature columns do not align")
 
         nondeterministic = _changed_columns(full_pre, repeat_pre)
@@ -102,112 +121,88 @@ class RuntimeLeakageCheck:
                 "— cannot prove leakage"
             )
 
-        shared = [c for c in full_pre.columns if c in masked_pre.columns]
-        if not shared:
-            return self._skip("feature_fn produced no comparable feature columns")
-
-        leaking = _changed_columns(full_pre[shared], masked_pre[shared])
-        if leaking:
-            violations = [
+        violations: list[Violation] = []
+        probes: list[CheckResult] = []
+        for mode_index, mode in enumerate(spec.perturbations):
+            perturbed = perturb_unknowns(
+                frame,
+                spec,
+                future_mask,
+                mode,
+                seed=spec.perturbation_seed + mode_index,
+            )
+            try:
+                perturbed_out = feature_fn(perturbed)
+            except Exception as exc:
+                probes.append(
+                    self._skip(f"{cutoff.isoformat()}/{mode}: {type(exc).__name__}: {exc}")
+                )
+                continue
+            perturbed_pre = _pre_cutoff_features(perturbed_out, spec, cutoff)
+            if perturbed_pre is None or perturbed_pre.empty:
+                probes.append(
+                    self._skip(
+                        f"{cutoff.isoformat()}/{mode}: feature_fn perturbation output has no comparable rows"
+                    )
+                )
+                continue
+            if not same_shape(full_pre, perturbed_pre):
+                probes.append(
+                    self._skip(
+                        f"{cutoff.isoformat()}/{mode}: feature_fn output rows or feature columns do not align"
+                    )
+                )
+                continue
+            probes.append(
+                CheckResult.passed(
+                    self.check_id, self.name, f"{cutoff.isoformat()}/{mode} completed"
+                )
+            )
+            leaking = _changed_columns(full_pre, perturbed_pre)
+            violations.extend(
                 Violation(
                     code="FG-LEAK-001",
                     severity=Severity.CRITICAL,
-                    message=f"feature {col!r} changes before the cutoff when the future is "
-                    "hidden — it reads across the cutoff",
-                    location=str(col),
-                    evidence=detail,
+                    message=f"feature {column!r} changes before the cutoff under {mode} "
+                    "perturbation — it reads across the cutoff",
+                    location=(f"{column}@{cutoff.isoformat()}" if rolling else str(column)),
+                    evidence={
+                        **detail,
+                        "cutoff": cutoff.isoformat(),
+                        "perturbation": mode,
+                        **_hint_evidence(ctx, "feature"),
+                    },
                 )
-                for col, detail in sorted(leaking.items())
-            ]
-            count = len(violations)
-            return CheckResult.failed(
-                self.check_id,
-                self.name,
-                f"{count} feature(s) leak across the cutoff",
-                violations,
+                for column, detail in sorted(leaking.items())
             )
 
-        pre_rows = len(full_pre)
-        return CheckResult.passed(
-            self.check_id,
-            self.name,
-            f"{len(shared)} feature(s) are leak-free across the cutoff "
-            f"(perturbation diff over {pre_rows} pre-cutoff rows)",
+        if violations:
+            probes.append(
+                CheckResult.failed(
+                    self.check_id, self.name, "future sensitivity detected", violations
+                )
+            )
+        return aggregate(
+            probes,
+            f"{len(violations)} violation(s); {len(full_pre.columns)} feature(s), "
+            f"{len(full_pre)} pre-cutoff rows, {len(spec.perturbations)} mode(s) requested",
         )
 
     def _skip(self, reason: str) -> CheckResult:
         return CheckResult.skipped(self.check_id, self.name, reason)
 
 
-def _mask_future(frame: pd.DataFrame, spec: object, future_mask: pd.Series) -> pd.DataFrame:
-    """Copy the frame with future-row unknowns set to NaN.
-
-    Kept (known at predict time): id, time, declared future + static covariates.
-    Masked: the target and every other (past-only) covariate.
-    """
-    keep = {spec.id_col, spec.time_col, *spec.future_covariates, *spec.static_covariates}  # type: ignore[attr-defined]
-    mask_cols = [c for c in frame.columns if c not in keep]
-    masked = frame.copy()
-    for col in mask_cols:
-        masked[col] = masked[col].mask(future_mask)
-    return masked
-
-
-def _pre_cutoff_features(out: object, spec: object, cutoff: pd.Timestamp) -> pd.DataFrame | None:
-    """Index a feature-fn output by ``(id, ds)`` over pre-cutoff rows, or None if unalignable."""
-    if not isinstance(out, pd.DataFrame):
+def _pre_cutoff_features(
+    out: object, spec: ForecastSpec, cutoff: pd.Timestamp
+) -> pd.DataFrame | None:
+    indexed = indexed_output(out, spec.id_col, spec.time_col)
+    if indexed is None:
         return None
-    id_col, time_col = spec.id_col, spec.time_col  # type: ignore[attr-defined]
-    if id_col not in out.columns or time_col not in out.columns:
-        return None
-    ds = pd.to_datetime(out[time_col], errors="coerce")
-    feature_cols = [c for c in out.columns if c not in (id_col, time_col)]
-    indexed = out.assign(__fg_ds=ds).loc[ds <= cutoff].set_index([id_col, "__fg_ds"])[feature_cols]
-    if indexed.index.has_duplicates:
-        return None
-    return indexed.sort_index()
+    return indexed.loc[indexed.index.get_level_values(spec.time_col) <= cutoff]
 
 
-def _changed_columns(a: pd.DataFrame, b: pd.DataFrame) -> dict[str, dict[str, object]]:
-    """Columns whose aligned values differ between two pre-cutoff feature frames."""
-    idx = a.index.intersection(b.index)
-    changed: dict[str, dict[str, object]] = {}
-    for col in (c for c in a.columns if c in b.columns):
-        av = a.loc[idx, col]
-        bv = b.loc[idx, col]
-        if is_numeric_dtype(av) and is_numeric_dtype(bv):
-            diff = ~np.isclose(
-                av.to_numpy(dtype=float),
-                bv.to_numpy(dtype=float),
-                rtol=_NUM_RTOL,
-                atol=_NUM_ATOL,
-                equal_nan=True,
-            )
-        else:
-            ne = av.ne(bv).to_numpy()
-            both_na = (av.isna() & bv.isna()).to_numpy()
-            diff = ne & ~both_na
-        if not bool(diff.any()):
-            continue
-        changed_keys = [key for key, is_diff in zip(idx, diff, strict=True) if is_diff]
-        sample = [
-            {
-                "id": str(key[0]),
-                "ds": pd.Timestamp(key[1]).isoformat(),
-                "full": _scalar(av.loc[key]),
-                "masked": _scalar(bv.loc[key]),
-            }
-            for key in changed_keys[:_SAMPLE]
-        ]
-        changed[col] = {"changed_pre_cutoff_rows": int(diff.sum()), "sample": sample}
-    return changed
-
-
-def _scalar(value: object) -> object:
-    """JSON-friendly scalar for evidence."""
-    if pd.isna(value):
-        return None
-    item = getattr(value, "item", None)
-    if callable(item):
-        return item()
-    return value if isinstance(value, (int, float, str, bool)) else str(value)
+def _hint_evidence(ctx: CheckContext, component: str) -> dict[str, object]:
+    hints = [
+        hint.model_dump(mode="json") for hint in ctx.source_hints if hint.component == component
+    ]
+    return {"source_hints": hints} if hints else {}

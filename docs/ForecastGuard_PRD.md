@@ -24,17 +24,18 @@ narrow:
 
 | Check | Catches | How |
 |---|---|---|
-| **Cutoff integrity** | Validation rows on/before the cutoff; bad horizons; duplicate timestamps | Deterministic dataframe check — zero false positives |
-| **Known-future covariates** | Variables used at predict time that won't exist in production | Declared-vs-used contract diff |
-| **Runtime leakage** | Feature engineering that reads across the cutoff (centered windows, full-frame scalers) | Behavioural perturbation — not source parsing |
+| **Cutoff integrity** | Invalid single/rolling horizons, duplicate window keys, null IDs | Exact per-window structural validation |
+| **Known-future covariates** | Invalid declarations/coverage, late availability, undeclared fitted-model inputs | Declared + framework-evidenced contract |
+| **Runtime leakage** | Cross-cutoff features, unavailable exogenous use, teacher forcing | Feature and forecast-output perturbation |
 
 ### 2.1 The moat — runtime leakage
 
-The moat is the leakage check. **A leak-free feature at time `t` cannot change
-when the future is hidden.** ForecastGuard re-runs the feature function on
-future-masked data and diffs the pre-cutoff values. It proves leakage
-*behaviourally* — catching what code-parsing misses, and never false-positiving
-on a correctly-built trailing feature.
+The moat is the leakage check. **A causal feature or prediction cannot change
+when unavailable future inputs are perturbed.** ForecastGuard tests feature
+functions before each origin and forecast functions over each horizon. An
+observed change establishes future dependence behaviourally. No observed change
+is bounded evidence for the tested windows, modes, data, and tolerance—not a
+universal proof. Source parsing may explain a proven result, never determine it.
 
 ## 3. Why now
 
@@ -60,14 +61,15 @@ this failure mode bites. The data contract is **Nixtla-native**
 - Enter the Nixtla ecosystem the open way — community example + docs/tutorial PR
   showing ForecastGuard validating a `cross_validation` workflow. Additive to
   their CV, not a critique of it.
-- **Later:** hosted CI tier (checks on every PR), MLForecast/StatsForecast
-  adapters, AST hint layer for line-level explanations.
+- Fitted MLForecast inspection and line-level explanation hints are part of the
+  local alpha; additional framework adapters and hosted dashboards are later.
 
 ## 6. Honest scope
 
 Detects **common, high-impact pipeline errors** before backtests are trusted —
-not "all leakage." Requires a callable feature function for the runtime check;
-given only a finished frame, it **skips loudly** rather than passing silently.
+not "all leakage." Requires a callable feature and/or forecast function for the
+runtime check; given only a finished frame, it **skips loudly** rather than
+passing silently. Materialized CV output cannot recreate raw pre-origin history.
 
 ## 7. The contract (input)
 
@@ -77,25 +79,30 @@ authoritative schema. It declares:
 
 - `data` — the long-format dataset (one row per series × timestamp)
 - `id_col` / `time_col` / `target_col` — Nixtla defaults `unique_id` / `ds` / `y`
-- `cutoff` — the train/validation boundary
+- exactly one of `cutoff` (single raw history), `cutoffs` (rolling raw history),
+  or `cutoff_col` (materialized Nixtla CV output)
 - `horizon` + `freq` — the forecast window and series spacing
 - `future_covariates` — what the user *declares* will be known at predict time
-- `feature_fn` — `"package.module:callable"`, required only for the runtime check
+- optional point-in-time `availability` timestamp contracts
+- optional `feature_fn`, `forecast_fn`, fitted `adapter`, perturbation modes/seed
 
 ## 8. The verdict (output)
 
 Every check returns a typed `CheckResult` (`pass` / `fail` / `skipped` /
-`error`); the run aggregates them into a `Report`. The CLI exits **non-zero**
-when the backtest can't be trusted — that exit code is the gate. `--strict`
-promotes loud skips to failures.
+`error`); the run aggregates them into a versioned `Report`. The CLI exits
+**non-zero** when the backtest can't be trusted — that exit code is the gate.
+`--strict` promotes loud skips to failures. Human, versioned JSON, SARIF 2.1.0,
+GitHub annotations, and the step summary all render the same typed report.
 
 ## 9. Roadmap (slices)
 
 | Slice | Deliverable |
 |---|---|
-| **1 — Foundation** | Package skeleton, Pydantic contract, Check protocol + stubs, runner, CLI, docs *(this pass)* |
+| **1 — Foundation** | Package skeleton, Pydantic contract, Check protocol, runner, CLI, docs ✅ |
 | **2** | Cutoff-integrity check (deterministic) + tests + leaky→clean example |
-| **3** | Known-future covariates check (declared-vs-used diff) |
+| **3** | Known-future covariates check (declared availability contract) |
 | **4** | Runtime-leakage check (behavioural perturbation) — the moat |
-| **5** | GitHub Action hardening, README GIF, Nixtla `cross_validation` tutorial PR |
-| **Later** | Hosted CI tier, MLForecast/StatsForecast adapters, AST hint layer |
+| **5** | Action hardening, README asset, Nixtla tutorial, release automation ✅ locally |
+| **P1–P3** | Rolling/Nixtla, MLForecast adapter, forecast perturbation, availability, evidence/benchmarks ✅ |
+| **Release** | GitHub/PyPI publication (maintainer credentials required) |
+| **Later** | Hosted CI tier, additional framework adapters |
