@@ -8,13 +8,82 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
+from forecastguard.checks.protocol import CheckContext
 from forecastguard.cli import app
 from forecastguard.config import load_spec
-from forecastguard.models.report import Report
+from forecastguard.models.report import CheckResult, Report
 from forecastguard.runner import run_checks
 from tests.conftest import QUICKSTART_SPEC, REPO_ROOT
 
 pytestmark = pytest.mark.integration
+
+
+def test_default_runner_uses_registered_checks(monkeypatch: pytest.MonkeyPatch) -> None:
+    class RegisteredCheck:
+        check_id = "registered_check"
+        name = "Registered check"
+
+        def run(self, ctx: CheckContext) -> CheckResult:
+            return CheckResult.passed(self.check_id, self.name, "executed")
+
+    monkeypatch.setattr("forecastguard.runner.default_checks", lambda: [RegisteredCheck()])
+    report = run_checks(load_spec(QUICKSTART_SPEC))
+    assert [result.check_id for result in report.results] == ["registered_check"]
+
+
+def test_invalid_data_does_not_resolve_user_code(monkeypatch: pytest.MonkeyPatch) -> None:
+    def unexpected(_ref: str) -> None:
+        pytest.fail("user code was resolved before structural validation")
+
+    monkeypatch.setattr("forecastguard.runner._resolve_callable", unexpected)
+    spec = load_spec(REPO_ROOT / "examples/cutoff_integrity/broken/forecastguard.yaml")
+    spec = spec.model_copy(update={"forecast_fn": "user:predict"})
+    report = run_checks(spec)
+    assert report.failed
+    assert report.has_skips
+
+
+def test_runtime_budget_does_not_import_user_code(monkeypatch: pytest.MonkeyPatch) -> None:
+    def unexpected(_ref: str) -> None:
+        pytest.fail("budget exceeded but user code was imported")
+
+    monkeypatch.setattr("forecastguard.runner._resolve_callable", unexpected)
+    spec = load_spec(QUICKSTART_SPEC).model_copy(
+        update={"forecast_fn": "user:predict", "max_probe_calls": 0}
+    )
+    report = run_checks(spec)
+    assert "no probes executed" in (report.results[-1].detail or "")
+    assert report.exit_code(strict=True) == 1
+
+
+def test_adapter_failure_prevents_runtime_import(monkeypatch: pytest.MonkeyPatch) -> None:
+    from forecastguard.models.spec import MLForecastAdapterSpec
+
+    def fail_adapter(*args: object) -> None:
+        raise ValueError("adapter unavailable")
+
+    def unexpected(_ref: str) -> None:
+        pytest.fail("runtime imported despite failed adapter")
+
+    monkeypatch.setattr("forecastguard.runner.inspect_mlforecast", fail_adapter)
+    monkeypatch.setattr("forecastguard.runner._resolve_callable", unexpected)
+    spec = load_spec(QUICKSTART_SPEC).model_copy(
+        update={
+            "adapter": MLForecastAdapterSpec(model_fn="user:factory"),
+            "forecast_fn": "user:predict",
+        }
+    )
+    report = run_checks(spec)
+    assert report.has_skips
+    assert report.exit_code(strict=True) == 1
+
+
+def test_github_json_stdout_remains_parseable() -> None:
+    result = CliRunner().invoke(
+        app, ["run", "--spec", str(QUICKSTART_SPEC), "--github", "--format", "json"]
+    )
+    assert json.loads(result.stdout)["schema_version"] == "1.0"
+    assert "::warning" in result.stderr
 
 
 def test_run_checks_on_quickstart() -> None:

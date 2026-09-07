@@ -99,6 +99,7 @@ class ForecastSpec(BaseModel):
     forecast_fn: str | None = None
     perturbations: list[PerturbationMode] = Field(default_factory=_default_perturbations)
     perturbation_seed: int = 0
+    max_probe_calls: int | None = Field(default=None, ge=0)
     adapter: MLForecastAdapterSpec | None = None
 
     @model_validator(mode="after")
@@ -163,8 +164,6 @@ class ForecastSpec(BaseModel):
                 "availability covariates must be declared future_covariates: "
                 + ", ".join(undeclared)
             )
-        if len(set(availability_columns)) != len(availability_columns):
-            raise ValueError("availability timestamp columns must be unique")
         reserved = {
             *core,
             *self.future_covariates,

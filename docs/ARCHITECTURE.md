@@ -18,6 +18,40 @@ judgment that fills gaps or evolves beyond the PRD.
 
 ## Data flow
 
+The default runner validates structure and declared covariates before importing
+user code. Failed prerequisites produce a runtime SKIP and a failing gate. Only
+valid inputs reach optional model inspection, then budgeted runtime execution.
+Explicit custom check sequences retain the caller's order and prerequisites.
+
+Behavioural probes share output indexing, numeric tolerances, evidence sampling,
+and result aggregation in `checks/comparison.py`. `CheckContext.windows` lazily
+prepares timestamps and origin grids once for feature and forecast probes; masks
+are generated per origin to avoid retaining a full dataframe per window.
+
+### Verdict contract
+
+| Status | Meaning | Gate |
+|---|---|---|
+| PASS | Requested comparisons completed; no violation observed under the declared inputs, windows, modes and tolerance | Exit 0 |
+| FAIL | At least one violation was established; `detail` also preserves incomplete probes | Exit 1 |
+| SKIPPED | Missing prerequisites, invalid callable output, nondeterminism, unsupported probes, or exceeded call budget prevented a complete verdict | Exit 1 with `--strict`, otherwise 0 |
+| ERROR | An unexpected execution failure prevented evaluation | Exit 1 |
+
+Runtime feature outputs may omit warm-up rows but need nonempty, unique,
+consistent keys. Forecast outputs must cover every series and horizon timestamp
+exactly once, with finite numeric baseline predictions. Inputs and output
+snapshots are isolated between executions. Callables must not depend on mutable
+external state: dataframe copies do not isolate globals, files, or model caches.
+
+A later skipped probe cannot erase a previous violation. Every configured mode
+continues when another mode is unsupported. JSON, human output, GitHub summaries
+and SARIF retain incomplete details alongside failures. Source hints remain
+possible explanations in evidence, not asserted violation locations.
+
+CV-output validation checks existing `(series, cutoff)` pairs, allowing different
+origins per series. It cannot discover an entirely omitted series/window without
+an external roster of expected pairs.
+
 ```
 forecastguard.yaml
       │  config.load_spec()

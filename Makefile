@@ -20,7 +20,7 @@ test:
 lint:
 	uv run ruff check forecastguard/ tests/
 	uv run ruff format --check forecastguard/ tests/
-	uv run mypy forecastguard/
+	uv run mypy forecastguard/ tests/
 
 format:
 	uv run ruff check --fix forecastguard/ tests/

@@ -32,7 +32,10 @@ def report_to_sarif(report: Report) -> dict[str, object]:
                     }
                 },
                 "results": [_sarif_result(item) for item in violations],
-                "properties": {"forecastguardSchemaVersion": report.schema_version},
+                "properties": {
+                    "forecastguardSchemaVersion": report.schema_version,
+                    "checks": [result.model_dump(mode="json") for result in report.results],
+                },
             }
         ],
     }
@@ -47,18 +50,15 @@ def github_annotations(report: Report) -> list[str]:
     commands: list[str] = []
     for result in report.results:
         for violation in result.violations:
-            hint = _first_hint(violation)
             properties: list[str] = []
-            if hint is not None and hint.get("path"):
-                properties.append(f"file={_escape_property(str(hint['path']))}")
-                line = hint.get("line")
-                if isinstance(line, int):
-                    properties.append(f"line={line}")
             properties.append(f"title={_escape_property(violation.code)}")
             commands.append(f"::error {','.join(properties)}::{_escape_message(violation.message)}")
-        if result.status is CheckStatus.SKIPPED:
+        if result.status is CheckStatus.SKIPPED or (
+            result.status is CheckStatus.FAIL and result.detail
+        ):
+            label = " skipped" if result.status is CheckStatus.SKIPPED else " incomplete"
             commands.append(
-                f"::warning title={_escape_property(result.name + ' skipped')}::"
+                f"::warning title={_escape_property(result.name + label)}::"
                 f"{_escape_message(result.detail or result.summary)}"
             )
         elif result.status is CheckStatus.ERROR:
@@ -73,7 +73,7 @@ def github_step_summary(report: Report) -> str:
     """Compact Markdown summary suitable for ``GITHUB_STEP_SUMMARY``."""
     lines = ["## ForecastGuard", "", "| Check | Status | Summary |", "|---|---:|---|"]
     for result in report.results:
-        summary = result.detail if result.status is CheckStatus.SKIPPED else result.summary
+        summary = result.summary + (f"; {result.detail}" if result.detail else "")
         lines.append(
             f"| {result.name} | {result.status.value.upper()} | "
             f"{str(summary or '').replace('|', '\\|')} |"
@@ -94,25 +94,7 @@ def _sarif_result(violation: Violation) -> dict[str, Any]:
             "evidence": violation.evidence,
         },
     }
-    hint = _first_hint(violation)
-    if hint is not None and hint.get("path"):
-        line = hint.get("line")
-        result["locations"] = [
-            {
-                "physicalLocation": {
-                    "artifactLocation": {"uri": str(hint["path"])},
-                    "region": {"startLine": line if isinstance(line, int) else 1},
-                }
-            }
-        ]
     return result
-
-
-def _first_hint(violation: Violation) -> dict[str, object] | None:
-    hints = violation.evidence.get("source_hints")
-    if isinstance(hints, list) and hints and isinstance(hints[0], dict):
-        return hints[0]
-    return None
 
 
 def _sarif_level(severity: Severity) -> str:

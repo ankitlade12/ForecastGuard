@@ -16,6 +16,21 @@ from forecastguard.models.spec import ForecastSpec
 pytestmark = pytest.mark.unit
 
 
+def test_cv_series_can_have_different_origins() -> None:
+    frame = pd.DataFrame(
+        {
+            "unique_id": ["A", "B"],
+            "ds": ["2024-01-03", "2024-01-05"],
+            "cutoff": ["2024-01-02", "2024-01-04"],
+            "y": [3.0, 5.0],
+        }
+    )
+    spec = ForecastSpec(data=Path("unused.csv"), cutoff_col="cutoff", horizon=1, freq="D")
+    assert (
+        CutoffIntegrityCheck().run(CheckContext(spec=spec, frame=frame)).status is CheckStatus.PASS
+    )
+
+
 def _run(
     frame: dict[str, Any], *, cutoff: str, horizon: int, freq: str = "D", **spec_kw: Any
 ) -> CheckResult:

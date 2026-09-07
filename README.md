@@ -191,9 +191,10 @@ action.yml       # composite GitHub Action wrapping the CLI
 
 ## Roadmap
 
-See [ROADMAP.md](ROADMAP.md). All planned local phases are complete. The only
-remaining release step is publishing the verified artifacts to GitHub/PyPI with
-maintainer credentials.
+See [ROADMAP.md](ROADMAP.md). The feature branch is undergoing reliability and
+adoption review before publication. The [rolling tutorial](docs/tutorials/nixtla-rolling.md)
+includes a real MLForecast runtime integration, call-budget controls, and a
+reproducible overhead measurement.
 
 ## License
 

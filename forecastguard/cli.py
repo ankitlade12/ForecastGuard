@@ -47,6 +47,8 @@ def _render(report: Report) -> None:
         if result.status is CheckStatus.ERROR and result.detail:
             last_line = result.detail.strip().splitlines()[-1]
             click.echo(f"         - {last_line}")
+        elif result.status is CheckStatus.FAIL and result.detail:
+            click.echo(f"         - Incomplete: {result.detail}")
     click.echo("")
 
 
@@ -107,7 +109,7 @@ def run(
         Path(sarif_output).write_text(sarif_json(report) + "\n", encoding="utf-8")
     if github:
         for command in github_annotations(report):
-            click.echo(command)
+            click.echo(command, err=output_format == "json")
         summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
         if summary_path:
             with Path(summary_path).open("a", encoding="utf-8") as handle:

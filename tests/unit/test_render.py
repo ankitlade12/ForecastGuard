@@ -10,6 +10,16 @@ from forecastguard.render import github_annotations, github_step_summary, report
 pytestmark = pytest.mark.unit
 
 
+def test_partial_failure_remains_visible_in_all_reports() -> None:
+    report = _report()
+    report.results[0].detail = "2024-01-01/nullify: unsupported"
+    assert "unsupported" in github_step_summary(report)
+    assert any("unsupported" in line for line in github_annotations(report))
+    runs = report_to_sarif(report)["runs"]
+    assert isinstance(runs, list)
+    assert runs[0]["properties"]["checks"][0]["detail"].endswith("unsupported")
+
+
 def _report() -> Report:
     return Report(
         spec_name="demo",
@@ -44,7 +54,7 @@ def _report() -> Report:
     )
 
 
-def test_sarif_preserves_code_severity_and_source_location() -> None:
+def test_sarif_keeps_unproven_source_hints_in_evidence() -> None:
     sarif = report_to_sarif(_report())
     runs = sarif["runs"]
     assert isinstance(runs, list)
@@ -55,12 +65,13 @@ def test_sarif_preserves_code_severity_and_source_location() -> None:
     result = results[0]
     assert result["ruleId"] == "FG-LEAK-001"
     assert result["level"] == "error"
-    assert result["locations"][0]["physicalLocation"]["region"]["startLine"] == 12
+    assert "locations" not in result
+    assert result["properties"]["evidence"]["source_hints"][0]["line"] == 12
 
 
 def test_github_annotations_include_failure_and_loud_skip() -> None:
     annotations = github_annotations(_report())
-    assert annotations[0].startswith("::error file=features.py,line=12")
+    assert annotations[0].startswith("::error title=")
     assert "FG-LEAK-001" in annotations[0]
     assert annotations[1].startswith("::warning")
 

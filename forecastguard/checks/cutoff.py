@@ -200,6 +200,8 @@ def _window_violations(
         expected = forecast_grid(cutoff, offset, horizon)
         for series_id in ids:
             group = groups[series_id]
+            if ctx.spec.cutoff_col is not None and not group["_cutoff"].eq(cutoff).any():
+                continue
             violation = _classify_window(series_id, group, cutoff, expected, ctx, rolling=rolling)
             if violation is None:
                 continue

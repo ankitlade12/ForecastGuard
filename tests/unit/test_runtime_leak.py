@@ -76,6 +76,68 @@ def _global_mean(df: pd.DataFrame) -> pd.DataFrame:
 # --- behaviour ----------------------------------------------------------------
 
 
+def test_in_place_features_are_isolated() -> None:
+    frame = _frame()
+    original = frame.copy(deep=True)
+    counter = 0
+
+    def mutate(data: pd.DataFrame) -> pd.DataFrame:
+        nonlocal counter
+        counter += 1
+        data["feature"] = counter
+        return data
+
+    result = _run(mutate, frame=frame)
+    assert result.status is CheckStatus.SKIPPED
+    assert "nondeterministic" in (result.detail or "")
+    pd.testing.assert_frame_equal(frame, original)
+
+
+def test_feature_failure_survives_incomplete_probe() -> None:
+    def features(frame: pd.DataFrame) -> pd.DataFrame:
+        if frame["y"].isna().any():
+            raise ValueError("nulls unsupported")
+        return frame[["unique_id", "ds"]].assign(mean=frame["y"].mean())
+
+    spec = ForecastSpec(
+        data=Path("unused.csv"),
+        cutoff="2024-01-04",
+        horizon=2,
+        freq="D",
+        perturbations=["sign_flip", "nullify"],
+    )
+    result = RuntimeLeakageCheck().run(CheckContext(spec=spec, frame=_frame(), feature_fn=features))
+    assert result.status is CheckStatus.FAIL
+    assert result.violations
+    assert "nullify" in (result.detail or "")
+
+
+def test_baselines_snapshot_reused_output_buffer() -> None:
+    buffer = _frame()
+    calls = 0
+
+    def features(_frame: pd.DataFrame) -> pd.DataFrame:
+        nonlocal calls
+        calls += 1
+        buffer["value"] = calls
+        return buffer
+
+    assert _run(features).status is CheckStatus.SKIPPED
+
+
+def test_probe_budget_prevents_calls() -> None:
+    def forbidden(frame: pd.DataFrame) -> pd.DataFrame:
+        pytest.fail("budget must be checked before execution")
+
+    spec = ForecastSpec(
+        data=Path("unused.csv"), cutoff="2024-01-04", horizon=2, freq="D", max_probe_calls=2
+    )
+    result = RuntimeLeakageCheck().run(
+        CheckContext(spec=spec, frame=_frame(), feature_fn=forbidden)
+    )
+    assert result.status is CheckStatus.SKIPPED
+
+
 def test_clean_trailing_feature_passes() -> None:
     result = _run(_clean_lag)
     assert result.status is CheckStatus.PASS

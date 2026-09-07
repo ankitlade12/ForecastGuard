@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
 
 import pandas as pd
@@ -13,6 +14,25 @@ from forecastguard.models.report import CheckStatus
 from forecastguard.models.spec import AvailabilitySpec, ForecastSpec
 
 pytestmark = pytest.mark.unit
+
+
+def test_covariates_can_share_publication_timestamp() -> None:
+    spec = ForecastSpec(
+        data=Path("unused.csv"),
+        cutoff="2024-01-04",
+        horizon=2,
+        freq="D",
+        future_covariates=["weather", "promo"],
+        availability=[
+            AvailabilitySpec(covariate=name, available_at_col="weather_available_at")
+            for name in ["weather", "promo"]
+        ],
+    )
+    frame = _frame(["2024-01-01"] * 6).assign(promo=1)
+    assert (
+        KnownFutureCovariatesCheck().run(CheckContext(spec=spec, frame=frame)).status
+        is CheckStatus.PASS
+    )
 
 
 def _spec(*, cutoffs: list[str] | None = None) -> ForecastSpec:
@@ -31,7 +51,7 @@ def _spec(*, cutoffs: list[str] | None = None) -> ForecastSpec:
     )
 
 
-def _frame(available: list[object]) -> pd.DataFrame:
+def _frame(available: Sequence[object]) -> pd.DataFrame:
     return pd.DataFrame(
         {
             "unique_id": ["A"] * 6,

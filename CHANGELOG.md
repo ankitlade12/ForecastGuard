@@ -7,6 +7,14 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Fixed
+- Runtime probes isolate in-place functions and snapshot reused output buffers.
+  Empty, partial, missing, or non-finite baseline forecasts cannot pass.
+- A later unsupported perturbation no longer erases established leakage; partial
+  failures remain visible in every report format.
+- CV series may use different origins, and covariates may share an availability
+  timestamp. Integer-valued inputs support numeric noise perturbations.
+- Mutation benchmark controls require PASS rather than accepting any non-FAIL.
+- `--format json --github` keeps annotations off JSON stdout.
 - Null series identifiers now fail cutoff integrity with `FG-CUTOFF-014`
   instead of being dropped by dataframe grouping and producing a zero-series
   PASS.
@@ -21,6 +29,11 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   full/repeat/masked runs, instead of passing after a zero-row perturbation diff.
 
 ### Changed
+- Default execution validates inputs before loading user code, with shared
+  comparison and window preparation. `max_probe_calls` caps planned runtime
+  executions; oversized plans skip before running probes.
+- Source hints remain possible explanations in evidence rather than asserted
+  source locations. A real MLForecast runtime example measures integration cost.
 - Runtime PASS summaries now report bounded evidence (no sensitivity detected
   for the tested cutoff, mask, data, and tolerance) instead of claiming a
   universal proof that features are leak-free.

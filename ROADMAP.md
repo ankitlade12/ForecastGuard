@@ -51,9 +51,11 @@ Python 3.12/3.13 CI, Nixtla tutorial, README asset, and release workflow.
 
 ## Release pending
 
-First GitHub release and PyPI publication. Local gates and workflows are ready;
-publication requires valid maintainer authentication and PyPI trusted-publisher
-configuration.
+Local reliability and adoption review is in progress on the feature branch.
+Regression coverage now includes incomplete predictions, in-place functions,
+partial failures and execution budgets. The real MLForecast integration and
+cost benchmark must remain green before release review. First GitHub release
+and PyPI publication remain pending maintainer review and publishing setup.
 
 ## Later
 - Hosted CI tier — checks on every PR, dashboards.

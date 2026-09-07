@@ -95,13 +95,13 @@ def run_mutations() -> dict[str, object]:
         else:
             context.forecast_fn = fn
         result = RuntimeLeakageCheck().run(context)
-        detected = result.status is CheckStatus.FAIL
+        expected = CheckStatus.FAIL if should_fail else CheckStatus.PASS
         rows.append(
             {
                 "case": name,
                 "expected": "fail" if should_fail else "pass",
                 "actual": result.status.value,
-                "correct": detected == should_fail,
+                "correct": result.status is expected,
                 "codes": sorted({item.code for item in result.violations}),
             }
         )

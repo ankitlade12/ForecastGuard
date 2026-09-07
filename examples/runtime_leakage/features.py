@@ -29,8 +29,6 @@ def leaky_features(df: pd.DataFrame) -> pd.DataFrame:
     df = df.sort_values(["unique_id", "ds"]).copy()
     by = df.groupby("unique_id")["y"]
     df["lag_1"] = by.shift(1)
-    df["centered_mean_3"] = by.transform(
-        lambda s: s.rolling(3, center=True, min_periods=1).mean()
-    )
+    df["centered_mean_3"] = by.transform(lambda s: s.rolling(3, center=True, min_periods=1).mean())
     df["y_vs_series_mean"] = df["y"] - by.transform("mean")
     return df[["unique_id", "ds", "lag_1", "centered_mean_3", "y_vs_series_mean"]]

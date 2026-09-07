@@ -4,11 +4,13 @@ ForecastGuard is a local-first developer tool: it reads your dataset and, for th
 runtime-leakage check, imports and calls the feature function you point it at. It
 makes no network calls and runs entirely in your environment.
 
-## Note on `feature_fn`
+## Executable configuration
 
-The runtime-leakage check executes the `feature_fn` declared in your spec. Only
-point ForecastGuard at code you trust — treat a `forecastguard.yaml` like any
-other executable config.
+Runtime checks execute `feature_fn` and `forecast_fn`; adapter inspection may
+execute `model_fn` or load serialized models through `model_path`. Only use code
+and model files you trust. User callables run in-process with your permissions;
+ForecastGuard is not a sandbox. User code may perform its own IO or network calls.
+The call budget limits probe count, not the duration or side effects of a call.
 
 ## Reporting a vulnerability
 

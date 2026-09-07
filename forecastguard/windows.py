@@ -2,9 +2,30 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import pandas as pd
+from pandas.tseries.frequencies import to_offset
 
 from forecastguard.models.spec import ForecastSpec
+
+
+@dataclass(frozen=True)
+class PreparedWindows:
+    timestamps: pd.Series
+    origins: list[tuple[pd.Timestamp, list[pd.Timestamp]]]
+
+
+def prepare_windows(spec: ForecastSpec, frame: pd.DataFrame) -> PreparedWindows:
+    timestamps = pd.to_datetime(frame[spec.time_col], errors="raise")
+    offset = to_offset(spec.freq)
+    return PreparedWindows(
+        timestamps,
+        [
+            (cutoff, forecast_grid(cutoff, offset, spec.horizon))
+            for cutoff in window_cutoffs(spec, frame)
+        ],
+    )
 
 
 def forecast_grid(

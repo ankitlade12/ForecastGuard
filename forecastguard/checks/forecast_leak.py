@@ -5,16 +5,13 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
-from pandas.tseries.frequencies import to_offset
 
+from forecastguard.checks.comparison import aggregate, changed_columns
+from forecastguard.checks.comparison import indexed_output as _prediction_frame
+from forecastguard.checks.comparison import same_shape as _same_shape
 from forecastguard.checks.protocol import CheckContext
-from forecastguard.models.report import CheckResult, CheckStatus, Severity, Violation
+from forecastguard.models.report import CheckResult, Severity, Violation
 from forecastguard.perturb import perturb_unknowns
-from forecastguard.windows import forecast_grid, window_cutoffs
-
-_RTOL = 1e-5
-_ATOL = 1e-8
-_SAMPLE = 5
 
 
 class ForecastPerturbationCheck:
@@ -32,34 +29,17 @@ class ForecastPerturbationCheck:
         if spec.id_col not in ctx.frame.columns or spec.time_col not in ctx.frame.columns:
             return self._skip("id/time column missing (the cutoff check reports this)")
         try:
-            ds = pd.to_datetime(ctx.frame[spec.time_col], errors="raise")
-            cutoffs = window_cutoffs(spec, ctx.frame)
-            offset = to_offset(spec.freq)
+            windows = ctx.windows
         except (ValueError, TypeError, KeyError):
             return self._skip("can't parse timestamps/window configuration")
 
         results = [
-            self._run_window(ctx, ds, cutoff, forecast_grid(cutoff, offset, spec.horizon), index)
-            for index, cutoff in enumerate(cutoffs)
+            self._run_window(ctx, windows.timestamps, cutoff, expected, index)
+            for index, (cutoff, expected) in enumerate(windows.origins)
         ]
-        failures = [result for result in results if result.status is CheckStatus.FAIL]
-        if failures:
-            violations = [violation for result in failures for violation in result.violations]
-            return CheckResult.failed(
-                self.check_id,
-                self.name,
-                f"{len(violations)} forecast-output sensitivity violation(s)",
-                violations,
-            )
-        skips = [result for result in results if result.status is CheckStatus.SKIPPED]
-        if skips:
-            reasons = "; ".join(result.detail or "unknown" for result in skips[:3])
-            return self._skip(f"forecast perturbation incomplete: {reasons}")
-        return CheckResult.passed(
-            self.check_id,
-            self.name,
-            f"forecast outputs stable across {len(cutoffs)} window(s) and "
-            f"{len(spec.perturbations)} perturbation mode(s)",
+        return aggregate(
+            results,
+            f"{len(windows.origins)} forecast window(s), {len(spec.perturbations)} mode(s) requested",
         )
 
     def _run_window(
@@ -79,21 +59,36 @@ class ForecastPerturbationCheck:
         if train.empty or future.empty:
             return self._skip(f"empty train/future input at cutoff {cutoff.isoformat()}")
         try:
-            baseline_a = forecast_fn(train.copy(), future.copy())
-            baseline_b = forecast_fn(train.copy(), future.copy())
+            aligned_a = _prediction_frame(
+                forecast_fn(train.copy(), future.copy()), spec.id_col, spec.time_col
+            )
+            aligned_b = _prediction_frame(
+                forecast_fn(train.copy(), future.copy()), spec.id_col, spec.time_col
+            )
         except Exception as exc:
             return self._skip(
                 f"forecast_fn raised at cutoff {cutoff.isoformat()} ({type(exc).__name__}: {exc})"
             )
-        aligned_a = _prediction_frame(baseline_a, spec.id_col, spec.time_col)
-        aligned_b = _prediction_frame(baseline_b, spec.id_col, spec.time_col)
         if aligned_a is None or aligned_b is None or not _same_shape(aligned_a, aligned_b):
             return self._skip("forecast_fn outputs are unalignable or inconsistent")
+        expected_keys = pd.MultiIndex.from_product(
+            [ctx.frame[spec.id_col].unique(), expected], names=[spec.id_col, spec.time_col]
+        ).sort_values()
+        if not aligned_a.index.equals(expected_keys):
+            return self._skip(
+                "forecast_fn must return every expected series/horizon row exactly once"
+            )
+        for baseline in (aligned_a, aligned_b):
+            if any(not is_numeric_dtype(baseline[column]) for column in baseline):
+                return self._skip("forecast_fn baseline predictions must be numeric")
+            if not np.isfinite(baseline.to_numpy(dtype=float, na_value=np.nan)).all():
+                return self._skip("forecast_fn baseline contains missing or non-finite predictions")
         nondeterministic = _changed_predictions(aligned_a, aligned_b)
         if nondeterministic:
             return self._skip("forecast_fn is nondeterministic — cannot attribute sensitivity")
 
         violations: list[Violation] = []
+        probes: list[CheckResult] = []
         all_rows = pd.Series(True, index=future.index)
         for mode_index, mode in enumerate(spec.perturbations):
             perturbed = perturb_unknowns(
@@ -106,13 +101,21 @@ class ForecastPerturbationCheck:
             try:
                 candidate = forecast_fn(train.copy(), perturbed)
             except Exception as exc:
-                return self._skip(
-                    f"forecast_fn raised under {mode} at {cutoff.isoformat()} "
-                    f"({type(exc).__name__}: {exc})"
+                probes.append(
+                    self._skip(f"{cutoff.isoformat()}/{mode}: {type(exc).__name__}: {exc}")
                 )
+                continue
             aligned = _prediction_frame(candidate, spec.id_col, spec.time_col)
             if aligned is None or not _same_shape(aligned_a, aligned):
-                return self._skip(f"forecast_fn output changed shape under {mode}")
+                probes.append(
+                    self._skip(f"{cutoff.isoformat()}/{mode}: forecast_fn output changed shape")
+                )
+                continue
+            probes.append(
+                CheckResult.passed(
+                    self.check_id, self.name, f"{cutoff.isoformat()}/{mode} completed"
+                )
+            )
             changed = _changed_predictions(aligned_a, aligned)
             for column, detail in sorted(changed.items()):
                 violations.append(
@@ -132,79 +135,31 @@ class ForecastPerturbationCheck:
                     )
                 )
         if violations:
-            return CheckResult.failed(
-                self.check_id,
-                self.name,
-                f"{len(violations)} sensitive forecast output(s)",
-                violations,
+            probes.append(
+                CheckResult.failed(
+                    self.check_id, self.name, "future sensitivity detected", violations
+                )
             )
-        return CheckResult.passed(self.check_id, self.name, "forecast output stable")
+        return aggregate(
+            probes,
+            f"{cutoff.isoformat()}: {len(violations)} violation(s), "
+            f"{len(aligned_a)} prediction rows",
+        )
 
     def _skip(self, reason: str) -> CheckResult:
         return CheckResult.skipped(self.check_id, self.name, reason)
 
 
-def _prediction_frame(out: object, id_col: str, time_col: str) -> pd.DataFrame | None:
-    if not isinstance(out, pd.DataFrame) or id_col not in out or time_col not in out:
-        return None
-    prediction_cols = [column for column in out.columns if column not in (id_col, time_col)]
-    if not prediction_cols:
-        return None
-    ds = pd.to_datetime(out[time_col], errors="coerce")
-    if bool(ds.isna().any()):
-        return None
-    indexed = out.assign(__fg_ds=ds).set_index([id_col, "__fg_ds"])[prediction_cols]
-    if indexed.index.has_duplicates:
-        return None
-    return indexed.sort_index()
-
-
-def _same_shape(left: pd.DataFrame, right: pd.DataFrame) -> bool:
-    return left.index.equals(right.index) and set(left.columns) == set(right.columns)
-
-
 def _changed_predictions(
     baseline: pd.DataFrame, candidate: pd.DataFrame
 ) -> dict[str, dict[str, object]]:
-    changed: dict[str, dict[str, object]] = {}
-    for column in baseline.columns:
-        left = baseline[column]
-        right = candidate[column]
-        if is_numeric_dtype(left) and is_numeric_dtype(right):
-            mask = ~np.isclose(
-                left.to_numpy(dtype=float),
-                right.to_numpy(dtype=float),
-                rtol=_RTOL,
-                atol=_ATOL,
-                equal_nan=True,
-            )
-        else:
-            mask = left.ne(right).to_numpy() & ~(left.isna() & right.isna()).to_numpy()
-        if not bool(mask.any()):
-            continue
-        keys = [key for key, value in zip(left.index, mask, strict=True) if value]
-        changed[str(column)] = {
-            "changed_prediction_rows": int(mask.sum()),
-            "sample": [
-                {
-                    "id": str(key[0]),
-                    "ds": pd.Timestamp(key[1]).isoformat(),
-                    "baseline": _scalar(left.loc[key]),
-                    "perturbed": _scalar(right.loc[key]),
-                }
-                for key in keys[:_SAMPLE]
-            ],
-        }
-    return changed
-
-
-def _scalar(value: object) -> object:
-    if pd.isna(value):
-        return None
-    item = getattr(value, "item", None)
-    if callable(item):
-        return item()
-    return value if isinstance(value, (int, float, str, bool)) else str(value)
+    return changed_columns(
+        baseline,
+        candidate,
+        count_key="changed_prediction_rows",
+        baseline_key="baseline",
+        candidate_key="perturbed",
+    )
 
 
 def _hint_evidence(ctx: CheckContext) -> dict[str, object]:

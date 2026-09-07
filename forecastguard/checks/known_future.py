@@ -36,11 +36,10 @@ as failures.
 from __future__ import annotations
 
 import pandas as pd
-from pandas.tseries.frequencies import to_offset
 
 from forecastguard.checks.protocol import CheckContext
 from forecastguard.models.report import CheckResult, Severity, Violation
-from forecastguard.windows import forecast_grid, holdout_mask, window_cutoffs
+from forecastguard.windows import holdout_mask
 
 
 class KnownFutureCovariatesCheck:
@@ -227,21 +226,19 @@ def _holdout_windows(ctx: CheckContext) -> list[tuple[pd.Timestamp, pd.Series]]:
     if any(column not in ctx.frame.columns for column in required):
         return []
     try:
-        ds = pd.to_datetime(ctx.frame[spec.time_col], errors="raise")
-        offset = to_offset(spec.freq)
-        cutoffs = window_cutoffs(spec, ctx.frame)
+        windows = ctx.windows
         return [
             (
                 cutoff,
                 holdout_mask(
                     spec,
                     ctx.frame,
-                    ds,
+                    windows.timestamps,
                     cutoff,
-                    forecast_grid(cutoff, offset, spec.horizon),
+                    expected,
                 ),
             )
-            for cutoff in cutoffs
+            for cutoff, expected in windows.origins
         ]
     except (ValueError, TypeError, KeyError):
         return []

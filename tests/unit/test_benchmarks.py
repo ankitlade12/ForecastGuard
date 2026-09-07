@@ -6,7 +6,17 @@ import pytest
 from benchmarks.mutation_benchmark import run_mutations
 from benchmarks.scale_benchmark import run_scale
 
+from forecastguard.models.report import CheckResult
+
 pytestmark = pytest.mark.unit
+
+
+def test_skipped_controls_are_not_scored_as_correct(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "benchmarks.mutation_benchmark.RuntimeLeakageCheck.run",
+        lambda self, ctx: CheckResult.skipped("runtime_leakage", "Runtime", "unavailable"),
+    )
+    assert run_mutations()["correct"] == 0
 
 
 def test_mutation_corpus_detects_all_seeded_leaks_and_passes_controls() -> None:

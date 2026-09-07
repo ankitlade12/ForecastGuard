@@ -37,6 +37,7 @@ def perturb_unknowns(
         if mode == "nullify" or not is_numeric_dtype(perturbed[column]):
             perturbed[column] = perturbed[column].mask(rows)
             continue
+        perturbed[column] = perturbed[column].astype(float)
         values = perturbed.loc[rows, column]
         if mode == "sign_flip":
             perturbed.loc[rows, column] = -values

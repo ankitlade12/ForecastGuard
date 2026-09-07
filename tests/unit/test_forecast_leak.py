@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
 
 import pandas as pd
@@ -9,8 +10,8 @@ import pytest
 
 from forecastguard.checks.protocol import CheckContext
 from forecastguard.checks.runtime_leak import RuntimeLeakageCheck
-from forecastguard.models.report import CheckStatus
-from forecastguard.models.spec import ForecastSpec
+from forecastguard.models.report import CheckResult, CheckStatus
+from forecastguard.models.spec import ForecastSpec, PerturbationMode
 
 pytestmark = pytest.mark.unit
 
@@ -28,12 +29,12 @@ def _frame() -> pd.DataFrame:
 
 
 def _run(
-    forecast_fn: object,
+    forecast_fn: Callable[..., pd.DataFrame],
     *,
     future_covariates: list[str] | None = None,
     cutoffs: list[str] | None = None,
-    perturbations: list[str] | None = None,
-) -> object:
+    perturbations: list[PerturbationMode] | None = None,
+) -> CheckResult:
     window: dict[str, object] = (
         {"cutoffs": cutoffs} if cutoffs is not None else {"cutoff": "2024-01-04"}
     )
@@ -42,11 +43,11 @@ def _run(
         horizon=2,
         freq="D",
         future_covariates=future_covariates or [],
-        perturbations=perturbations or ["nullify"],  # type: ignore[arg-type]
+        perturbations=perturbations or ["nullify"],
         **window,
     )
     return RuntimeLeakageCheck().run(
-        CheckContext(spec=spec, frame=_frame(), forecast_fn=forecast_fn)  # type: ignore[arg-type]
+        CheckContext(spec=spec, frame=_frame(), forecast_fn=forecast_fn)
     )
 
 
@@ -121,3 +122,31 @@ def test_nondeterministic_forecast_skips_loudly() -> None:
     result = _run(nondeterministic)
     assert result.status is CheckStatus.SKIPPED
     assert "nondeterministic" in (result.detail or "")
+
+
+@pytest.mark.parametrize("rows", [0, 1])
+def test_incomplete_predictions_do_not_pass(rows: int) -> None:
+    def predict(train: pd.DataFrame, future: pd.DataFrame) -> pd.DataFrame:
+        return _clean_recursive(train, future).head(rows)
+
+    assert _run(predict).status is CheckStatus.SKIPPED
+
+
+def test_failure_survives_later_probe_exception() -> None:
+    def predict(_train: pd.DataFrame, future: pd.DataFrame) -> pd.DataFrame:
+        if future["y"].isna().any():
+            raise ValueError("missing targets")
+        return future[["unique_id", "ds"]].assign(yhat=future["y"])
+
+    result = _run(predict, perturbations=["sign_flip", "nullify"])
+    assert result.status is CheckStatus.FAIL
+    assert result.violations
+    assert "nullify" in (result.detail or "")
+
+
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), "invalid"])
+def test_invalid_baseline_predictions_skip(value: object) -> None:
+    def predict(_train: pd.DataFrame, future: pd.DataFrame) -> pd.DataFrame:
+        return future[["unique_id", "ds"]].assign(yhat=value)
+
+    assert _run(predict).status is CheckStatus.SKIPPED

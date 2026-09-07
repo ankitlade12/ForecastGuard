@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "feat/complete-forecastguard-phases" ]
   pull_request:
     branches: [ "main" ]
 
@@ -32,13 +32,16 @@ jobs:
           uv run --extra dev --python ${{ matrix.python-version }} ruff format --check forecastguard/ tests/
 
       - name: Type-check (mypy strict)
-        run: uv run --extra dev --python ${{ matrix.python-version }} mypy forecastguard/
+        run: uv run --extra dev --python ${{ matrix.python-version }} mypy forecastguard/ tests/
 
       - name: Test (pytest)
         run: uv run --extra dev --python ${{ matrix.python-version }} pytest --cov=forecastguard --cov-report=term-missing
 
       - name: Build distributions
         run: uv build
+
+      - name: Real MLForecast integration
+        run: uv run --extra dev --extra nixtla --python ${{ matrix.python-version }} pytest tests/integration/test_mlforecast_real.py
 
       - name: Verify wheel and sdist metadata
         run: uvx twine check dist/*
