@@ -13,8 +13,8 @@ How would it detect that? Deterministic dataframe rule, declared-vs-used diff,
 behavioural perturbation, or something new?
 
 **Honest scope**
-Could it false-positive on a correctly-built pipeline? How do we keep the
-zero-false-positive bar (see DECISIONS D-002)?
+Could it flag a correctly-built pipeline? What evidence would establish its
+coverage, false alarms and limitations (see DECISIONS D-014)?
 
 **Alternatives considered**
 Anything you've tried or ruled out.

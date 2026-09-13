@@ -47,7 +47,7 @@ adapter:
 The runner intersects `model.ts.features_order_` with raw dataframe columns. A
 consumed raw feature that is neither `future_covariates` nor
 `static_covariates` fails as `FG-FUTURE-004`. Install adapter support with
-`pip install 'forecastguard[nixtla]'`.
+`uv sync --extra nixtla` from this checkout (or `python -m pip install '.[nixtla]'`).
 
 MLForecast documentation: [cross-validation](https://nixtlaverse.nixtla.io/mlforecast/docs/how-to-guides/cross_validation.html),
 [exogenous features](https://nixtlaverse.nixtla.io/mlforecast/docs/how-to-guides/exogenous_features.html).

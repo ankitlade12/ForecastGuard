@@ -9,10 +9,14 @@ labels: bug
 A clear description of the bug.
 
 **Which check**
-`cutoff_integrity` / `known_future_covariates` / `runtime_leakage` / CLI / runner.
+`cutoff_integrity` / `known_future_covariates` / `runtime_leakage` / setup / plan /
+diagnostics / replay / revision history / documentation.
 
 **Minimal repro**
 The smallest `forecastguard.yaml` + a tiny frame (or snippet) that reproduces it.
+Include the callable when runtime behaviour is involved. Use synthetic or anonymized
+data and redact private values from reports. Security reports belong in SECURITY.md's
+private reporting channel.
 
 ```yaml
 # forecastguard.yaml
@@ -30,3 +34,5 @@ What the verdict should have been, and what it was.
 - forecastguard version:
 - Python version:
 - OS:
+- model library and version (if applicable):
+- violation codes and incomplete coverage (from `--format json`):

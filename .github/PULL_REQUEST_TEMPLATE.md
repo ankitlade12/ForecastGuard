@@ -15,6 +15,7 @@ relevant `docs/DECISIONS.md` entry or PRD section.
 - [ ] Tests added/updated; `make test` passes.
 - [ ] `make lint` passes (ruff + mypy strict).
 - [ ] Checks return typed `CheckResult`; column names read from `ctx.spec`.
-- [ ] Zero-false-positive bar considered (D-002).
+- [ ] Coverage, false alarms and limitations considered (D-014).
+- [ ] Relevant optional integration tests ran; changed documentation commands verified.
 - [ ] `CHANGELOG.md` `[Unreleased]` updated.
 - [ ] Docs updated if the spec/report contract or behavior changed.

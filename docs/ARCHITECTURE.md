@@ -11,12 +11,25 @@ One-page entry point for anyone (human or AI) working in this repo.
 | **What's planned / in flight** | [`plans/`](./plans/) — dated slice plans |
 | **The input contract** | [`forecastguard/models/spec.py`](../forecastguard/models/spec.py) |
 | **The output contract** | [`forecastguard/models/report.py`](../forecastguard/models/report.py) |
-| **How to set up, run, test, contribute** | `Makefile` + `pyproject.toml` + `.pre-commit-config.yaml` |
+| **How to set up and use the library** | [User documentation](README.md) |
+| **How to test and contribute** | [Contributing](../CONTRIBUTING.md) + `Makefile` |
 
 The PRD describes the product as intended. DECISIONS.md captures engineering
 judgment that fills gaps or evolves beyond the PRD.
 
 ## Data flow
+
+`init` scaffolds validated configuration and optional MLForecast callables.
+`planning.plan_execution` uses `runner.data_context` to load data and revision
+sidecars without importing executable configuration. `run` keeps the same three
+checks; revision evidence is composed into known-future validation. Optional
+`replay.replay_forecast` reconstructs a pipeline instance for every raw-history
+forecast probe. `execution` tracks requested comparisons and actual calls.
+After an established behavioural failure, `diagnostics` runs budgeted single-input
+interventions that cannot change the original verdict. Report coverage and
+diagnostic fields are additive to schema 1.0 and retained by all renderers.
+
+See [the adoption guide](ADOPTION_GUIDE.md) for contracts and complete examples.
 
 The default runner validates structure and declared covariates before importing
 user code. Failed prerequisites produce a runtime SKIP and a failing gate. Only
@@ -56,12 +69,12 @@ an external roster of expected pairs.
 forecastguard.yaml
       │  config.load_spec()
       ▼
-  ForecastSpec ───────────────► runner.build_context()
-                                      │  (load frame; resolve feature/forecast
-                                      │   callables, adapter evidence, AST hints)
+  ForecastSpec ───────────────► runner.run_checks()
+                                      │  data_context: load frame and histories
+                                      │  validate prerequisites before user imports
                                       ▼
                                  CheckContext
-                                      │  runner.run_checks()
+                                      │  ordered checks; lazy runtime setup
             ┌──────────────┬──────────┴───────────┐
             ▼              ▼                        ▼
    CutoffIntegrity   KnownFuture            RuntimeLeakage
@@ -79,22 +92,30 @@ forecastguard/
 │   ├── spec.py          # ForecastSpec — the declared input contract
 │   ├── report.py        # Report, CheckResult, Violation, Severity, CheckStatus
 │   ├── adapter.py       # fitted-framework consumed-feature evidence
+│   ├── execution.py     # typed coverage and diagnostic evidence
 │   └── hint.py          # explanation-only source locations
 ├── checks/
 │   ├── protocol.py      # Check protocol + CheckContext (the run bundle)
 │   ├── cutoff.py        # Check 1 — deterministic dataframe validation
 │   ├── known_future.py  # Check 2 — declared availability contract
+│   ├── revisions.py     # revision evidence composed into Check 2
 │   ├── runtime_leak.py  # Check 3 — feature perturbation + aggregation
 │   └── forecast_leak.py # forecast-output perturbation component
 ├── adapters/
-│   └── mlforecast.py    # optional ts.features_order_ introspection
+│   ├── mlforecast.py    # optional ts.features_order_ introspection
+│   └── mlforecast_runtime.py # generated-wrapper fit/predict integration
+├── setup.py             # validated init and optional wrapper generation
+├── planning.py          # data-only readiness and execution counts
+├── execution.py         # actual runtime accounting and probe coverage
+├── replay.py            # fresh pipeline factory adaptation
+├── diagnostics.py       # budgeted explanations after behavioural failures
 ├── windows.py           # shared single/rolling/CV window semantics
 ├── perturb.py           # nullify/noise/sign_flip contract-aware inputs
 ├── explain.py           # AST hints after behavioural proof only
 ├── render.py            # SARIF + GitHub renderers over typed Report
 ├── runner.py            # build_context + run_checks (orchestration + IO)
 ├── config.py            # load_spec (YAML -> validated ForecastSpec)
-└── cli.py               # Click entry point: `forecastguard run`
+└── cli.py               # Click entry points: init, plan, run
 
 tests/                   # pytest tiers: unit, contract, integration
 examples/                # leaky -> clean demo specs and data

@@ -47,6 +47,17 @@ class AvailabilitySpec(BaseModel):
     available_at_col: str = Field(min_length=1)
 
 
+class RevisionSpec(BaseModel):
+    """Sidecar versions used to enforce latest-available values at each origin."""
+
+    model_config = ConfigDict(extra="forbid")
+    column: str = Field(min_length=1)
+    data: Path
+    value_col: str = Field(default="value", min_length=1)
+    available_at_col: str = Field(default="available_at", min_length=1)
+    policy: Literal["latest_available"] = "latest_available"
+
+
 class ForecastSpec(BaseModel):
     """Declared contract for one forecasting backtest.
 
@@ -101,10 +112,34 @@ class ForecastSpec(BaseModel):
     perturbation_seed: int = 0
     max_probe_calls: int | None = Field(default=None, ge=0)
     adapter: MLForecastAdapterSpec | None = None
+    pipeline_factory: str | None = Field(default=None, min_length=1)
+    diagnostics: bool = False
+    max_diagnostic_calls: int = Field(default=20, ge=0)
+    revisions: list[RevisionSpec] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_column_roles(self) -> Self:
         """Reject ambiguous or duplicated column-role declarations."""
+        if self.pipeline_factory and (self.feature_fn or self.forecast_fn):
+            raise ValueError("pipeline_factory is mutually exclusive with feature_fn/forecast_fn")
+        revision_columns = [revision.column for revision in self.revisions]
+        if len(set(revision_columns)) != len(revision_columns):
+            raise ValueError("declare at most one revision history per column")
+        for revision in self.revisions:
+            if revision.column in {
+                self.id_col,
+                self.time_col,
+                self.cutoff_col,
+                *self.static_covariates,
+            }:
+                raise ValueError("revision column cannot be identity, time, cutoff, or static")
+            if (
+                len({self.id_col, self.time_col, revision.value_col, revision.available_at_col})
+                != 4
+            ):
+                raise ValueError(
+                    "revision value/availability columns must be distinct from id/time"
+                )
         sources = (
             int(self.cutoff is not None)
             + int(bool(self.cutoffs))

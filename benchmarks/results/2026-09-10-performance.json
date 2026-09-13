@@ -1,0 +1,3379 @@
+{
+  "schema_version": "1.0",
+  "environment": {
+    "utc": "2026-09-10T19:59:26.883609+00:00",
+    "platform": "macOS-26.5.2-arm64-arm-64bit",
+    "machine": "arm64",
+    "python": "3.12.12",
+    "git_head": "646be654c64d1780963f8e0a6892711947ebb60d",
+    "packages": {
+      "pandas": "3.0.3",
+      "numpy": "2.4.6",
+      "pydantic": "2.13.4",
+      "mlforecast": "1.0.2",
+      "scikit-learn": "1.9.0"
+    }
+  },
+  "m4": {
+    "source": "https://datasets-nixtla.s3.amazonaws.com/m4-hourly.csv",
+    "sha256": "b260c5422dfa6fc829f6a9acb2f7b43e7fac076a330e25e3a07a09fe731519b3",
+    "selected_ids": [
+      "H1",
+      "H10",
+      "H100",
+      "H101",
+      "H102",
+      "H103",
+      "H104",
+      "H105",
+      "H106",
+      "H107"
+    ],
+    "observations_per_series": 240,
+    "transforms": "First 240 integer hours mapped to synthetic hourly timestamps; promo=0; original targets unchanged."
+  },
+  "method": "Serial warmed-up wall-clock samples; gate includes CSV IO; Python allocations measured separately, not RSS. No parallel benchmark jobs.",
+  "timings": [
+    {
+      "label": "synthetic_20x120_2windows_linear_1modes",
+      "rows": 2400,
+      "series": 20,
+      "windows": 2,
+      "horizon": 7,
+      "frequency": "D",
+      "modes": [
+        "nullify"
+      ],
+      "model": "LinearRegression",
+      "baseline_planned_calls": 2,
+      "gate_planned_calls": 6,
+      "baseline": {
+        "seconds": [
+          0.05331858401768841,
+          0.04579408300924115,
+          0.05037074998836033,
+          0.04613249999238178,
+          0.04430829201010056
+        ],
+        "median_seconds": 0.04613249999238178,
+        "python_peak_bytes": 409344
+      },
+      "additional_gate": {
+        "seconds": [
+          0.3305197080189828,
+          0.24640679199364968,
+          0.21464712501619942,
+          0.22451879098662175,
+          0.21634637500392273
+        ],
+        "median_seconds": 0.22451879098662175,
+        "python_peak_bytes": 748546
+      },
+      "structural_only": {
+        "seconds": [
+          0.03413212500163354,
+          0.03553433300112374,
+          0.03864987500128336,
+          0.03809383400948718,
+          0.10936612499062903
+        ],
+        "median_seconds": 0.03809383400948718,
+        "python_peak_bytes": 396806
+      },
+      "gate_to_baseline_ratio": 4.866824711942736,
+      "total_backtest_plus_gate_ratio": 5.866824711942736,
+      "clean_mae": 2.8237793491248233,
+      "injected_leak_mae": 1.411889674562411,
+      "clean_report": {
+        "schema_version": "1.0",
+        "spec_name": null,
+        "results": [
+          {
+            "check_id": "cutoff_integrity",
+            "name": "Cutoff integrity",
+            "status": "pass",
+            "summary": "20 series; 2 window(s) well-formed (horizon 7, freq D)",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "known_future_covariates",
+            "name": "Known-future covariates",
+            "status": "pass",
+            "summary": "1 future covariate(s) validated",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "runtime_leakage",
+            "name": "Runtime leakage",
+            "status": "pass",
+            "summary": "no future sensitivity detected; 2 forecast window(s), 1 mode(s) requested",
+            "violations": [],
+            "detail": null
+          }
+        ]
+      },
+      "injected_leak_report": {
+        "schema_version": "1.0",
+        "spec_name": null,
+        "results": [
+          {
+            "check_id": "cutoff_integrity",
+            "name": "Cutoff integrity",
+            "status": "pass",
+            "summary": "20 series; 2 window(s) well-formed (horizon 7, freq D)",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "known_future_covariates",
+            "name": "Known-future covariates",
+            "status": "pass",
+            "summary": "1 future covariate(s) validated",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "runtime_leakage",
+            "name": "Runtime leakage",
+            "status": "fail",
+            "summary": "2 forecast window(s), 1 mode(s) requested",
+            "violations": [
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with nullify",
+                "location": "prediction@2024-04-15T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 140,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-16T00:00:00",
+                      "baseline": 61.627173369589585,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-17T00:00:00",
+                      "baseline": 60.06880423782608,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-18T00:00:00",
+                      "baseline": 60.30556543039418,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-19T00:00:00",
+                      "baseline": 50.10244517283431,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-20T00:00:00",
+                      "baseline": 45.422958966037854,
+                      "perturbed": null
+                    }
+                  ],
+                  "cutoff": "2024-04-15T00:00:00",
+                  "perturbation": "nullify",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with nullify",
+                "location": "prediction@2024-04-22T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 140,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-23T00:00:00",
+                      "baseline": 60.258796528344334,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-24T00:00:00",
+                      "baseline": 56.44881992733514,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-25T00:00:00",
+                      "baseline": 54.22773128784708,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-26T00:00:00",
+                      "baseline": 53.639949791942634,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-27T00:00:00",
+                      "baseline": 47.212898217060754,
+                      "perturbed": null
+                    }
+                  ],
+                  "cutoff": "2024-04-22T00:00:00",
+                  "perturbation": "nullify",
+                  "prediction_column": "prediction"
+                }
+              }
+            ],
+            "detail": null
+          }
+        ]
+      },
+      "structural_only_report": {
+        "schema_version": "1.0",
+        "spec_name": null,
+        "results": [
+          {
+            "check_id": "cutoff_integrity",
+            "name": "Cutoff integrity",
+            "status": "pass",
+            "summary": "20 series; 2 window(s) well-formed (horizon 7, freq D)",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "known_future_covariates",
+            "name": "Known-future covariates",
+            "status": "pass",
+            "summary": "1 future covariate(s) validated",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "runtime_leakage",
+            "name": "Runtime leakage",
+            "status": "skipped",
+            "summary": "skipped",
+            "violations": [],
+            "detail": "no feature_fn or forecast_fn declared; no runtime coverage"
+          }
+        ]
+      }
+    },
+    {
+      "label": "synthetic_20x120_2windows_linear_3modes",
+      "rows": 2400,
+      "series": 20,
+      "windows": 2,
+      "horizon": 7,
+      "frequency": "D",
+      "modes": [
+        "nullify",
+        "noise",
+        "sign_flip"
+      ],
+      "model": "LinearRegression",
+      "baseline_planned_calls": 2,
+      "gate_planned_calls": 10,
+      "baseline": {
+        "seconds": [
+          0.04124116600723937,
+          0.043839916004799306,
+          0.04777687499881722,
+          0.05185220899875276,
+          0.04865470898221247
+        ],
+        "median_seconds": 0.04777687499881722,
+        "python_peak_bytes": 404037
+      },
+      "additional_gate": {
+        "seconds": [
+          0.35956345798331313,
+          0.3331734169914853,
+          0.3321352089988068,
+          0.34188645900576375,
+          0.33956312501686625
+        ],
+        "median_seconds": 0.33956312501686625,
+        "python_peak_bytes": 792630
+      },
+      "structural_only": {
+        "seconds": [
+          0.05018950000521727,
+          0.03773174999514595,
+          0.037043958000140265,
+          0.03917954201460816,
+          0.03994195902487263
+        ],
+        "median_seconds": 0.03917954201460816,
+        "python_peak_bytes": 383577
+      },
+      "gate_to_baseline_ratio": 7.107269469283468,
+      "total_backtest_plus_gate_ratio": 8.107269469283468,
+      "clean_mae": 2.8237793491248233,
+      "injected_leak_mae": 1.411889674562411,
+      "clean_report": {
+        "schema_version": "1.0",
+        "spec_name": null,
+        "results": [
+          {
+            "check_id": "cutoff_integrity",
+            "name": "Cutoff integrity",
+            "status": "pass",
+            "summary": "20 series; 2 window(s) well-formed (horizon 7, freq D)",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "known_future_covariates",
+            "name": "Known-future covariates",
+            "status": "pass",
+            "summary": "1 future covariate(s) validated",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "runtime_leakage",
+            "name": "Runtime leakage",
+            "status": "pass",
+            "summary": "no future sensitivity detected; 2 forecast window(s), 3 mode(s) requested",
+            "violations": [],
+            "detail": null
+          }
+        ]
+      },
+      "injected_leak_report": {
+        "schema_version": "1.0",
+        "spec_name": null,
+        "results": [
+          {
+            "check_id": "cutoff_integrity",
+            "name": "Cutoff integrity",
+            "status": "pass",
+            "summary": "20 series; 2 window(s) well-formed (horizon 7, freq D)",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "known_future_covariates",
+            "name": "Known-future covariates",
+            "status": "pass",
+            "summary": "1 future covariate(s) validated",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "runtime_leakage",
+            "name": "Runtime leakage",
+            "status": "fail",
+            "summary": "2 forecast window(s), 3 mode(s) requested",
+            "violations": [
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with nullify",
+                "location": "prediction@2024-04-15T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 140,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-16T00:00:00",
+                      "baseline": 61.627173369589585,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-17T00:00:00",
+                      "baseline": 60.06880423782608,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-18T00:00:00",
+                      "baseline": 60.30556543039418,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-19T00:00:00",
+                      "baseline": 50.10244517283431,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-20T00:00:00",
+                      "baseline": 45.422958966037854,
+                      "perturbed": null
+                    }
+                  ],
+                  "cutoff": "2024-04-15T00:00:00",
+                  "perturbation": "nullify",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with noise",
+                "location": "prediction@2024-04-15T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 140,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-16T00:00:00",
+                      "baseline": 61.627173369589585,
+                      "perturbed": 71.75270680287846
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-17T00:00:00",
+                      "baseline": 60.06880423782608,
+                      "perturbed": 84.14201757467369
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-18T00:00:00",
+                      "baseline": 60.30556543039418,
+                      "perturbed": 69.98729202356506
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-19T00:00:00",
+                      "baseline": 50.10244517283431,
+                      "perturbed": 11.920252756554884
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-20T00:00:00",
+                      "baseline": 45.422958966037854,
+                      "perturbed": 71.94966738476181
+                    }
+                  ],
+                  "cutoff": "2024-04-15T00:00:00",
+                  "perturbation": "noise",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with sign_flip",
+                "location": "prediction@2024-04-15T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 140,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-16T00:00:00",
+                      "baseline": 61.627173369589585,
+                      "perturbed": -0.6467848719213372
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-17T00:00:00",
+                      "baseline": 60.06880423782608,
+                      "perturbed": 1.1075811991559874
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-18T00:00:00",
+                      "baseline": 60.30556543039418,
+                      "perturbed": -0.9616063639392962
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-19T00:00:00",
+                      "baseline": 50.10244517283431,
+                      "perturbed": 2.7366541749373035
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-20T00:00:00",
+                      "baseline": 45.422958966037854,
+                      "perturbed": 1.1020457329769577
+                    }
+                  ],
+                  "cutoff": "2024-04-15T00:00:00",
+                  "perturbation": "sign_flip",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with nullify",
+                "location": "prediction@2024-04-22T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 140,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-23T00:00:00",
+                      "baseline": 60.258796528344334,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-24T00:00:00",
+                      "baseline": 56.44881992733514,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-25T00:00:00",
+                      "baseline": 54.22773128784708,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-26T00:00:00",
+                      "baseline": 53.639949791942634,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-27T00:00:00",
+                      "baseline": 47.212898217060754,
+                      "perturbed": null
+                    }
+                  ],
+                  "cutoff": "2024-04-22T00:00:00",
+                  "perturbation": "nullify",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with noise",
+                "location": "prediction@2024-04-22T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 140,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-23T00:00:00",
+                      "baseline": 60.258796528344334,
+                      "perturbed": 11.33669680485633
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-24T00:00:00",
+                      "baseline": 56.44881992733514,
+                      "perturbed": 71.94298634158471
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-25T00:00:00",
+                      "baseline": 54.22773128784708,
+                      "perturbed": 47.730110193984
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-26T00:00:00",
+                      "baseline": 53.639949791942634,
+                      "perturbed": 22.242230816850753
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-27T00:00:00",
+                      "baseline": 47.212898217060754,
+                      "perturbed": 63.16543059568227
+                    }
+                  ],
+                  "cutoff": "2024-04-22T00:00:00",
+                  "perturbation": "noise",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with sign_flip",
+                "location": "prediction@2024-04-22T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 140,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-23T00:00:00",
+                      "baseline": 60.258796528344334,
+                      "perturbed": 1.9752619717815207
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-24T00:00:00",
+                      "baseline": 56.44881992733514,
+                      "perturbed": 1.0079508028817052
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-25T00:00:00",
+                      "baseline": 54.22773128784708,
+                      "perturbed": 3.6322671112876606
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-26T00:00:00",
+                      "baseline": 53.639949791942634,
+                      "perturbed": -1.0721610571451308
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-04-27T00:00:00",
+                      "baseline": 47.212898217060754,
+                      "perturbed": 1.7071387041732287
+                    }
+                  ],
+                  "cutoff": "2024-04-22T00:00:00",
+                  "perturbation": "sign_flip",
+                  "prediction_column": "prediction"
+                }
+              }
+            ],
+            "detail": null
+          }
+        ]
+      },
+      "structural_only_report": {
+        "schema_version": "1.0",
+        "spec_name": null,
+        "results": [
+          {
+            "check_id": "cutoff_integrity",
+            "name": "Cutoff integrity",
+            "status": "pass",
+            "summary": "20 series; 2 window(s) well-formed (horizon 7, freq D)",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "known_future_covariates",
+            "name": "Known-future covariates",
+            "status": "pass",
+            "summary": "1 future covariate(s) validated",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "runtime_leakage",
+            "name": "Runtime leakage",
+            "status": "skipped",
+            "summary": "skipped",
+            "violations": [],
+            "detail": "no feature_fn or forecast_fn declared; no runtime coverage"
+          }
+        ]
+      }
+    },
+    {
+      "label": "synthetic_100x365_2windows_linear_1modes",
+      "rows": 36500,
+      "series": 100,
+      "windows": 2,
+      "horizon": 7,
+      "frequency": "D",
+      "modes": [
+        "nullify"
+      ],
+      "model": "LinearRegression",
+      "baseline_planned_calls": 2,
+      "gate_planned_calls": 6,
+      "baseline": {
+        "seconds": [
+          0.10369970800820738,
+          0.10295454098377377,
+          0.10770650001359172,
+          0.10125129198422655,
+          0.14505045898840763
+        ],
+        "median_seconds": 0.10369970800820738,
+        "python_peak_bytes": 4881872
+      },
+      "additional_gate": {
+        "seconds": [
+          0.5042146659980062,
+          0.6005965829826891,
+          0.5920392920088489,
+          0.7576808749872725,
+          0.5404244170058519
+        ],
+        "median_seconds": 0.5920392920088489,
+        "python_peak_bytes": 8831528
+      },
+      "structural_only": {
+        "seconds": [
+          0.1370279160037171,
+          0.15973975000088103,
+          0.11502158400253393,
+          0.12230233300942928,
+          0.09536520901019685
+        ],
+        "median_seconds": 0.12230233300942928,
+        "python_peak_bytes": 4899703
+      },
+      "gate_to_baseline_ratio": 5.709170289679037,
+      "total_backtest_plus_gate_ratio": 6.709170289679037,
+      "clean_mae": 2.890381403628859,
+      "injected_leak_mae": 1.4451907018144305,
+      "clean_report": {
+        "schema_version": "1.0",
+        "spec_name": null,
+        "results": [
+          {
+            "check_id": "cutoff_integrity",
+            "name": "Cutoff integrity",
+            "status": "pass",
+            "summary": "100 series; 2 window(s) well-formed (horizon 7, freq D)",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "known_future_covariates",
+            "name": "Known-future covariates",
+            "status": "pass",
+            "summary": "1 future covariate(s) validated",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "runtime_leakage",
+            "name": "Runtime leakage",
+            "status": "pass",
+            "summary": "no future sensitivity detected; 2 forecast window(s), 1 mode(s) requested",
+            "violations": [],
+            "detail": null
+          }
+        ]
+      },
+      "injected_leak_report": {
+        "schema_version": "1.0",
+        "spec_name": null,
+        "results": [
+          {
+            "check_id": "cutoff_integrity",
+            "name": "Cutoff integrity",
+            "status": "pass",
+            "summary": "100 series; 2 window(s) well-formed (horizon 7, freq D)",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "known_future_covariates",
+            "name": "Known-future covariates",
+            "status": "pass",
+            "summary": "1 future covariate(s) validated",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "runtime_leakage",
+            "name": "Runtime leakage",
+            "status": "fail",
+            "summary": "2 forecast window(s), 1 mode(s) requested",
+            "violations": [
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with nullify",
+                "location": "prediction@2024-12-16T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 700,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-17T00:00:00",
+                      "baseline": 53.59882989078011,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-18T00:00:00",
+                      "baseline": 58.01474944157273,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-19T00:00:00",
+                      "baseline": 60.431803694356574,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-20T00:00:00",
+                      "baseline": 49.47557297361768,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-21T00:00:00",
+                      "baseline": 47.6674169018341,
+                      "perturbed": null
+                    }
+                  ],
+                  "cutoff": "2024-12-16T00:00:00",
+                  "perturbation": "nullify",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with nullify",
+                "location": "prediction@2024-12-23T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 700,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-24T00:00:00",
+                      "baseline": 57.468502926312574,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-25T00:00:00",
+                      "baseline": 58.11327119508779,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-26T00:00:00",
+                      "baseline": 58.48385171820994,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-27T00:00:00",
+                      "baseline": 52.66590522826611,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-28T00:00:00",
+                      "baseline": 47.27172585547309,
+                      "perturbed": null
+                    }
+                  ],
+                  "cutoff": "2024-12-23T00:00:00",
+                  "perturbation": "nullify",
+                  "prediction_column": "prediction"
+                }
+              }
+            ],
+            "detail": null
+          }
+        ]
+      },
+      "structural_only_report": {
+        "schema_version": "1.0",
+        "spec_name": null,
+        "results": [
+          {
+            "check_id": "cutoff_integrity",
+            "name": "Cutoff integrity",
+            "status": "pass",
+            "summary": "100 series; 2 window(s) well-formed (horizon 7, freq D)",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "known_future_covariates",
+            "name": "Known-future covariates",
+            "status": "pass",
+            "summary": "1 future covariate(s) validated",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "runtime_leakage",
+            "name": "Runtime leakage",
+            "status": "skipped",
+            "summary": "skipped",
+            "violations": [],
+            "detail": "no feature_fn or forecast_fn declared; no runtime coverage"
+          }
+        ]
+      }
+    },
+    {
+      "label": "synthetic_100x365_2windows_linear_3modes",
+      "rows": 36500,
+      "series": 100,
+      "windows": 2,
+      "horizon": 7,
+      "frequency": "D",
+      "modes": [
+        "nullify",
+        "noise",
+        "sign_flip"
+      ],
+      "model": "LinearRegression",
+      "baseline_planned_calls": 2,
+      "gate_planned_calls": 10,
+      "baseline": {
+        "seconds": [
+          0.04999808399588801,
+          0.05767866698442958,
+          0.04927783299353905,
+          0.08273495797766373,
+          0.061872332997154444
+        ],
+        "median_seconds": 0.05767866698442958,
+        "python_peak_bytes": 4883791
+      },
+      "additional_gate": {
+        "seconds": [
+          0.5313122920051683,
+          0.34435958301764913,
+          0.43501849999302067,
+          0.32169737498043105,
+          0.309431208006572
+        ],
+        "median_seconds": 0.34435958301764913,
+        "python_peak_bytes": 8896730
+      },
+      "structural_only": {
+        "seconds": [
+          0.07133658402017318,
+          0.07279954201658256,
+          0.1449849579948932,
+          0.09246520799933933,
+          0.07403866699314676
+        ],
+        "median_seconds": 0.07403866699314676,
+        "python_peak_bytes": 4900064
+      },
+      "gate_to_baseline_ratio": 5.970311052968845,
+      "total_backtest_plus_gate_ratio": 6.970311052968845,
+      "clean_mae": 2.890381403628859,
+      "injected_leak_mae": 1.4451907018144305,
+      "clean_report": {
+        "schema_version": "1.0",
+        "spec_name": null,
+        "results": [
+          {
+            "check_id": "cutoff_integrity",
+            "name": "Cutoff integrity",
+            "status": "pass",
+            "summary": "100 series; 2 window(s) well-formed (horizon 7, freq D)",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "known_future_covariates",
+            "name": "Known-future covariates",
+            "status": "pass",
+            "summary": "1 future covariate(s) validated",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "runtime_leakage",
+            "name": "Runtime leakage",
+            "status": "pass",
+            "summary": "no future sensitivity detected; 2 forecast window(s), 3 mode(s) requested",
+            "violations": [],
+            "detail": null
+          }
+        ]
+      },
+      "injected_leak_report": {
+        "schema_version": "1.0",
+        "spec_name": null,
+        "results": [
+          {
+            "check_id": "cutoff_integrity",
+            "name": "Cutoff integrity",
+            "status": "pass",
+            "summary": "100 series; 2 window(s) well-formed (horizon 7, freq D)",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "known_future_covariates",
+            "name": "Known-future covariates",
+            "status": "pass",
+            "summary": "1 future covariate(s) validated",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "runtime_leakage",
+            "name": "Runtime leakage",
+            "status": "fail",
+            "summary": "2 forecast window(s), 3 mode(s) requested",
+            "violations": [
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with nullify",
+                "location": "prediction@2024-12-16T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 700,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-17T00:00:00",
+                      "baseline": 53.59882989078011,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-18T00:00:00",
+                      "baseline": 58.01474944157273,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-19T00:00:00",
+                      "baseline": 60.431803694356574,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-20T00:00:00",
+                      "baseline": 49.47557297361768,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-21T00:00:00",
+                      "baseline": 47.6674169018341,
+                      "perturbed": null
+                    }
+                  ],
+                  "cutoff": "2024-12-16T00:00:00",
+                  "perturbation": "nullify",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with noise",
+                "location": "prediction@2024-12-16T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 700,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-17T00:00:00",
+                      "baseline": 53.59882989078011,
+                      "perturbed": 103.56795449258735
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-18T00:00:00",
+                      "baseline": 58.01474944157273,
+                      "perturbed": 176.81514694360405
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-19T00:00:00",
+                      "baseline": 60.431803694356574,
+                      "perturbed": 108.21075832249285
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-20T00:00:00",
+                      "baseline": 49.47557297361768,
+                      "perturbed": -138.95210276213183
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-21T00:00:00",
+                      "baseline": 47.6674169018341,
+                      "perturbed": 178.57571985535915
+                    }
+                  ],
+                  "cutoff": "2024-12-16T00:00:00",
+                  "perturbation": "noise",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with sign_flip",
+                "location": "prediction@2024-12-16T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 700,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-17T00:00:00",
+                      "baseline": 53.59882989078011,
+                      "perturbed": 0.49165282596942106
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-18T00:00:00",
+                      "baseline": 58.01474944157273,
+                      "perturbed": -1.1016152377929629
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-19T00:00:00",
+                      "baseline": 60.431803694356574,
+                      "perturbed": -2.932874635984895
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-20T00:00:00",
+                      "baseline": 49.47557297361768,
+                      "perturbed": -1.4573688856713432
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-21T00:00:00",
+                      "baseline": 47.6674169018341,
+                      "perturbed": 2.8360871053156984
+                    }
+                  ],
+                  "cutoff": "2024-12-16T00:00:00",
+                  "perturbation": "sign_flip",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with nullify",
+                "location": "prediction@2024-12-23T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 700,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-24T00:00:00",
+                      "baseline": 57.468502926312574,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-25T00:00:00",
+                      "baseline": 58.11327119508779,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-26T00:00:00",
+                      "baseline": 58.48385171820994,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-27T00:00:00",
+                      "baseline": 52.66590522826611,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-28T00:00:00",
+                      "baseline": 47.27172585547309,
+                      "perturbed": null
+                    }
+                  ],
+                  "cutoff": "2024-12-23T00:00:00",
+                  "perturbation": "nullify",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with noise",
+                "location": "prediction@2024-12-23T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 700,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-24T00:00:00",
+                      "baseline": 57.468502926312574,
+                      "perturbed": -187.93256808074895
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-25T00:00:00",
+                      "baseline": 58.11327119508779,
+                      "perturbed": 135.83448622693098
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-26T00:00:00",
+                      "baseline": 58.48385171820994,
+                      "perturbed": 25.890745853080283
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-27T00:00:00",
+                      "baseline": 52.66590522826611,
+                      "perturbed": -104.83007117535946
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-28T00:00:00",
+                      "baseline": 47.27172585547309,
+                      "perturbed": 127.29217782125465
+                    }
+                  ],
+                  "cutoff": "2024-12-23T00:00:00",
+                  "perturbation": "noise",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with sign_flip",
+                "location": "prediction@2024-12-23T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 700,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-24T00:00:00",
+                      "baseline": 57.468502926312574,
+                      "perturbed": -1.5217581189523486
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-25T00:00:00",
+                      "baseline": 58.11327119508779,
+                      "perturbed": -2.1514303972765028
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-26T00:00:00",
+                      "baseline": 58.48385171820994,
+                      "perturbed": 5.733674888800415
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-27T00:00:00",
+                      "baseline": 52.66590522826611,
+                      "perturbed": 4.140281691828349
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-28T00:00:00",
+                      "baseline": 47.27172585547309,
+                      "perturbed": 2.7398153233100864
+                    }
+                  ],
+                  "cutoff": "2024-12-23T00:00:00",
+                  "perturbation": "sign_flip",
+                  "prediction_column": "prediction"
+                }
+              }
+            ],
+            "detail": null
+          }
+        ]
+      },
+      "structural_only_report": {
+        "schema_version": "1.0",
+        "spec_name": null,
+        "results": [
+          {
+            "check_id": "cutoff_integrity",
+            "name": "Cutoff integrity",
+            "status": "pass",
+            "summary": "100 series; 2 window(s) well-formed (horizon 7, freq D)",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "known_future_covariates",
+            "name": "Known-future covariates",
+            "status": "pass",
+            "summary": "1 future covariate(s) validated",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "runtime_leakage",
+            "name": "Runtime leakage",
+            "status": "skipped",
+            "summary": "skipped",
+            "violations": [],
+            "detail": "no feature_fn or forecast_fn declared; no runtime coverage"
+          }
+        ]
+      }
+    },
+    {
+      "label": "synthetic_100x365_5windows_linear_1modes",
+      "rows": 36500,
+      "series": 100,
+      "windows": 5,
+      "horizon": 7,
+      "frequency": "D",
+      "modes": [
+        "nullify"
+      ],
+      "model": "LinearRegression",
+      "baseline_planned_calls": 5,
+      "gate_planned_calls": 15,
+      "baseline": {
+        "seconds": [
+          0.13357212499249727,
+          0.13696591701591387,
+          0.13534966701990925,
+          0.13534654100658372,
+          0.16586262502823956
+        ],
+        "median_seconds": 0.13534966701990925,
+        "python_peak_bytes": 5010848
+      },
+      "additional_gate": {
+        "seconds": [
+          0.714238665997982,
+          0.7724338340049144,
+          0.6450850410037674,
+          0.7179978750064038,
+          1.4478852080064826
+        ],
+        "median_seconds": 0.7179978750064038,
+        "python_peak_bytes": 8866375
+      },
+      "structural_only": {
+        "seconds": [
+          0.18975620801211335,
+          0.16113179101375863,
+          0.15727958298521116,
+          0.15843224999844097,
+          0.16466704200138338
+        ],
+        "median_seconds": 0.16113179101375863,
+        "python_peak_bytes": 4900104
+      },
+      "gate_to_baseline_ratio": 5.304762773452483,
+      "total_backtest_plus_gate_ratio": 6.304762773452483,
+      "clean_mae": 2.851420133670926,
+      "injected_leak_mae": 1.425710066835464,
+      "clean_report": {
+        "schema_version": "1.0",
+        "spec_name": null,
+        "results": [
+          {
+            "check_id": "cutoff_integrity",
+            "name": "Cutoff integrity",
+            "status": "pass",
+            "summary": "100 series; 5 window(s) well-formed (horizon 7, freq D)",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "known_future_covariates",
+            "name": "Known-future covariates",
+            "status": "pass",
+            "summary": "1 future covariate(s) validated",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "runtime_leakage",
+            "name": "Runtime leakage",
+            "status": "pass",
+            "summary": "no future sensitivity detected; 5 forecast window(s), 1 mode(s) requested",
+            "violations": [],
+            "detail": null
+          }
+        ]
+      },
+      "injected_leak_report": {
+        "schema_version": "1.0",
+        "spec_name": null,
+        "results": [
+          {
+            "check_id": "cutoff_integrity",
+            "name": "Cutoff integrity",
+            "status": "pass",
+            "summary": "100 series; 5 window(s) well-formed (horizon 7, freq D)",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "known_future_covariates",
+            "name": "Known-future covariates",
+            "status": "pass",
+            "summary": "1 future covariate(s) validated",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "runtime_leakage",
+            "name": "Runtime leakage",
+            "status": "fail",
+            "summary": "5 forecast window(s), 1 mode(s) requested",
+            "violations": [
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with nullify",
+                "location": "prediction@2024-11-25T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 700,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-11-26T00:00:00",
+                      "baseline": 62.774695139763935,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-11-27T00:00:00",
+                      "baseline": 58.84972980187837,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-11-28T00:00:00",
+                      "baseline": 55.65250024101205,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-11-29T00:00:00",
+                      "baseline": 52.687803515804596,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-11-30T00:00:00",
+                      "baseline": 42.910128135604495,
+                      "perturbed": null
+                    }
+                  ],
+                  "cutoff": "2024-11-25T00:00:00",
+                  "perturbation": "nullify",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with nullify",
+                "location": "prediction@2024-12-02T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 700,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-03T00:00:00",
+                      "baseline": 56.53288276119612,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-04T00:00:00",
+                      "baseline": 56.79877441192673,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-05T00:00:00",
+                      "baseline": 58.666586960531774,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-06T00:00:00",
+                      "baseline": 52.589951305765894,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-07T00:00:00",
+                      "baseline": 42.22641197519174,
+                      "perturbed": null
+                    }
+                  ],
+                  "cutoff": "2024-12-02T00:00:00",
+                  "perturbation": "nullify",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with nullify",
+                "location": "prediction@2024-12-09T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 700,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-10T00:00:00",
+                      "baseline": 55.50439385265258,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-11T00:00:00",
+                      "baseline": 60.966459891053866,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-12T00:00:00",
+                      "baseline": 56.56764122483296,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-13T00:00:00",
+                      "baseline": 46.33745278474289,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-14T00:00:00",
+                      "baseline": 46.895484619913844,
+                      "perturbed": null
+                    }
+                  ],
+                  "cutoff": "2024-12-09T00:00:00",
+                  "perturbation": "nullify",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with nullify",
+                "location": "prediction@2024-12-16T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 700,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-17T00:00:00",
+                      "baseline": 53.59882989078011,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-18T00:00:00",
+                      "baseline": 58.01474944157273,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-19T00:00:00",
+                      "baseline": 60.431803694356574,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-20T00:00:00",
+                      "baseline": 49.47557297361768,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-21T00:00:00",
+                      "baseline": 47.6674169018341,
+                      "perturbed": null
+                    }
+                  ],
+                  "cutoff": "2024-12-16T00:00:00",
+                  "perturbation": "nullify",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with nullify",
+                "location": "prediction@2024-12-23T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 700,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-24T00:00:00",
+                      "baseline": 57.468502926312574,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-25T00:00:00",
+                      "baseline": 58.11327119508779,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-26T00:00:00",
+                      "baseline": 58.48385171820994,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-27T00:00:00",
+                      "baseline": 52.66590522826611,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-28T00:00:00",
+                      "baseline": 47.27172585547309,
+                      "perturbed": null
+                    }
+                  ],
+                  "cutoff": "2024-12-23T00:00:00",
+                  "perturbation": "nullify",
+                  "prediction_column": "prediction"
+                }
+              }
+            ],
+            "detail": null
+          }
+        ]
+      },
+      "structural_only_report": {
+        "schema_version": "1.0",
+        "spec_name": null,
+        "results": [
+          {
+            "check_id": "cutoff_integrity",
+            "name": "Cutoff integrity",
+            "status": "pass",
+            "summary": "100 series; 5 window(s) well-formed (horizon 7, freq D)",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "known_future_covariates",
+            "name": "Known-future covariates",
+            "status": "pass",
+            "summary": "1 future covariate(s) validated",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "runtime_leakage",
+            "name": "Runtime leakage",
+            "status": "skipped",
+            "summary": "skipped",
+            "violations": [],
+            "detail": "no feature_fn or forecast_fn declared; no runtime coverage"
+          }
+        ]
+      }
+    },
+    {
+      "label": "synthetic_100x365_5windows_linear_3modes",
+      "rows": 36500,
+      "series": 100,
+      "windows": 5,
+      "horizon": 7,
+      "frequency": "D",
+      "modes": [
+        "nullify",
+        "noise",
+        "sign_flip"
+      ],
+      "model": "LinearRegression",
+      "baseline_planned_calls": 5,
+      "gate_planned_calls": 25,
+      "baseline": {
+        "seconds": [
+          0.12512641699868254,
+          0.1223167080024723,
+          0.12532258397550322,
+          0.12249820900615305,
+          0.12292041699402034
+        ],
+        "median_seconds": 0.12292041699402034,
+        "python_peak_bytes": 4967911
+      },
+      "additional_gate": {
+        "seconds": [
+          0.8308027920138557,
+          0.8224124999833293,
+          0.8029341250075959,
+          0.7513946660037618,
+          0.759489666990703
+        ],
+        "median_seconds": 0.8029341250075959,
+        "python_peak_bytes": 8945355
+      },
+      "structural_only": {
+        "seconds": [
+          0.13429200000246055,
+          0.133833500003675,
+          0.1337999580136966,
+          0.13405962497927248,
+          0.13389133400050923
+        ],
+        "median_seconds": 0.13389133400050923,
+        "python_peak_bytes": 4902187
+      },
+      "gate_to_baseline_ratio": 6.532146120580244,
+      "total_backtest_plus_gate_ratio": 7.532146120580244,
+      "clean_mae": 2.851420133670926,
+      "injected_leak_mae": 1.425710066835464,
+      "clean_report": {
+        "schema_version": "1.0",
+        "spec_name": null,
+        "results": [
+          {
+            "check_id": "cutoff_integrity",
+            "name": "Cutoff integrity",
+            "status": "pass",
+            "summary": "100 series; 5 window(s) well-formed (horizon 7, freq D)",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "known_future_covariates",
+            "name": "Known-future covariates",
+            "status": "pass",
+            "summary": "1 future covariate(s) validated",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "runtime_leakage",
+            "name": "Runtime leakage",
+            "status": "pass",
+            "summary": "no future sensitivity detected; 5 forecast window(s), 3 mode(s) requested",
+            "violations": [],
+            "detail": null
+          }
+        ]
+      },
+      "injected_leak_report": {
+        "schema_version": "1.0",
+        "spec_name": null,
+        "results": [
+          {
+            "check_id": "cutoff_integrity",
+            "name": "Cutoff integrity",
+            "status": "pass",
+            "summary": "100 series; 5 window(s) well-formed (horizon 7, freq D)",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "known_future_covariates",
+            "name": "Known-future covariates",
+            "status": "pass",
+            "summary": "1 future covariate(s) validated",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "runtime_leakage",
+            "name": "Runtime leakage",
+            "status": "fail",
+            "summary": "5 forecast window(s), 3 mode(s) requested",
+            "violations": [
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with nullify",
+                "location": "prediction@2024-11-25T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 700,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-11-26T00:00:00",
+                      "baseline": 62.774695139763935,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-11-27T00:00:00",
+                      "baseline": 58.84972980187837,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-11-28T00:00:00",
+                      "baseline": 55.65250024101205,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-11-29T00:00:00",
+                      "baseline": 52.687803515804596,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-11-30T00:00:00",
+                      "baseline": 42.910128135604495,
+                      "perturbed": null
+                    }
+                  ],
+                  "cutoff": "2024-11-25T00:00:00",
+                  "perturbation": "nullify",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with noise",
+                "location": "prediction@2024-11-25T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 700,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-11-26T00:00:00",
+                      "baseline": 62.774695139763935,
+                      "perturbed": 112.70592114603453
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-11-27T00:00:00",
+                      "baseline": 58.84972980187837,
+                      "perturbed": 177.56002430029696
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-11-28T00:00:00",
+                      "baseline": 55.65250024101205,
+                      "perturbed": 103.39521738668199
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-11-29T00:00:00",
+                      "baseline": 52.687803515804596,
+                      "perturbed": -135.59696108576904
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-11-30T00:00:00",
+                      "baseline": 42.910128135604495,
+                      "perturbed": 173.71914496263523
+                    }
+                  ],
+                  "cutoff": "2024-11-25T00:00:00",
+                  "perturbation": "noise",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with sign_flip",
+                "location": "prediction@2024-11-25T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 700,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-11-26T00:00:00",
+                      "baseline": 62.774695139763935,
+                      "perturbed": 2.4175326392012266
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-11-27T00:00:00",
+                      "baseline": 58.84972980187837,
+                      "perturbed": 1.7546031357321397
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-11-28T00:00:00",
+                      "baseline": 55.65250024101205,
+                      "perturbed": 2.4698551537726843
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-11-29T00:00:00",
+                      "baseline": 52.687803515804596,
+                      "perturbed": 3.4551358415295255
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-11-30T00:00:00",
+                      "baseline": 42.910128135604495,
+                      "perturbed": -0.9732072985109674
+                    }
+                  ],
+                  "cutoff": "2024-11-25T00:00:00",
+                  "perturbation": "sign_flip",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with nullify",
+                "location": "prediction@2024-12-02T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 700,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-03T00:00:00",
+                      "baseline": 56.53288276119612,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-04T00:00:00",
+                      "baseline": 56.79877441192673,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-05T00:00:00",
+                      "baseline": 58.666586960531774,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-06T00:00:00",
+                      "baseline": 52.589951305765894,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-07T00:00:00",
+                      "baseline": 42.22641197519174,
+                      "perturbed": null
+                    }
+                  ],
+                  "cutoff": "2024-12-02T00:00:00",
+                  "perturbation": "nullify",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with noise",
+                "location": "prediction@2024-12-02T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 700,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-03T00:00:00",
+                      "baseline": 56.53288276119612,
+                      "perturbed": -188.99757486599572
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-04T00:00:00",
+                      "baseline": 56.79877441192673,
+                      "perturbed": 134.56096760773684
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-05T00:00:00",
+                      "baseline": 58.666586960531774,
+                      "perturbed": 26.0562965257092
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-06T00:00:00",
+                      "baseline": 52.589951305765894,
+                      "perturbed": -104.98906414894194
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-07T00:00:00",
+                      "baseline": 42.22641197519174,
+                      "perturbed": 122.28905436735842
+                    }
+                  ],
+                  "cutoff": "2024-12-02T00:00:00",
+                  "perturbation": "noise",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with sign_flip",
+                "location": "prediction@2024-12-02T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 700,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-03T00:00:00",
+                      "baseline": 56.53288276119612,
+                      "perturbed": -1.5232619921338184
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-04T00:00:00",
+                      "baseline": 56.79877441192673,
+                      "perturbed": -2.4761853679519525
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-05T00:00:00",
+                      "baseline": 58.666586960531774,
+                      "perturbed": -2.6652519308856384
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-06T00:00:00",
+                      "baseline": 52.589951305765894,
+                      "perturbed": 0.8305270391953883
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-07T00:00:00",
+                      "baseline": 42.22641197519174,
+                      "perturbed": 1.3509720343899367
+                    }
+                  ],
+                  "cutoff": "2024-12-02T00:00:00",
+                  "perturbation": "sign_flip",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with nullify",
+                "location": "prediction@2024-12-09T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 700,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-10T00:00:00",
+                      "baseline": 55.50439385265258,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-11T00:00:00",
+                      "baseline": 60.966459891053866,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-12T00:00:00",
+                      "baseline": 56.56764122483296,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-13T00:00:00",
+                      "baseline": 46.33745278474289,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-14T00:00:00",
+                      "baseline": 46.895484619913844,
+                      "perturbed": null
+                    }
+                  ],
+                  "cutoff": "2024-12-09T00:00:00",
+                  "perturbation": "nullify",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with noise",
+                "location": "prediction@2024-12-09T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 700,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-10T00:00:00",
+                      "baseline": 55.50439385265258,
+                      "perturbed": 39.26132250951812
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-11T00:00:00",
+                      "baseline": 60.966459891053866,
+                      "perturbed": 248.3143088870535
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-12T00:00:00",
+                      "baseline": 56.56764122483296,
+                      "perturbed": -75.62262000909931
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-13T00:00:00",
+                      "baseline": 46.33745278474289,
+                      "perturbed": -98.96866913640488
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-14T00:00:00",
+                      "baseline": 46.895484619913844,
+                      "perturbed": -76.54040845757277
+                    }
+                  ],
+                  "cutoff": "2024-12-09T00:00:00",
+                  "perturbation": "noise",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with sign_flip",
+                "location": "prediction@2024-12-09T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 700,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-10T00:00:00",
+                      "baseline": 55.50439385265258,
+                      "perturbed": -0.4615424296803674
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-11T00:00:00",
+                      "baseline": 60.966459891053866,
+                      "perturbed": -0.10117586152399838
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-12T00:00:00",
+                      "baseline": 56.56764122483296,
+                      "perturbed": 2.333490696603832
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-13T00:00:00",
+                      "baseline": 46.33745278474289,
+                      "perturbed": 4.569528522176427
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-14T00:00:00",
+                      "baseline": 46.895484619913844,
+                      "perturbed": -1.3138578584746163
+                    }
+                  ],
+                  "cutoff": "2024-12-09T00:00:00",
+                  "perturbation": "sign_flip",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with nullify",
+                "location": "prediction@2024-12-16T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 700,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-17T00:00:00",
+                      "baseline": 53.59882989078011,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-18T00:00:00",
+                      "baseline": 58.01474944157273,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-19T00:00:00",
+                      "baseline": 60.431803694356574,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-20T00:00:00",
+                      "baseline": 49.47557297361768,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-21T00:00:00",
+                      "baseline": 47.6674169018341,
+                      "perturbed": null
+                    }
+                  ],
+                  "cutoff": "2024-12-16T00:00:00",
+                  "perturbation": "nullify",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with noise",
+                "location": "prediction@2024-12-16T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 700,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-17T00:00:00",
+                      "baseline": 53.59882989078011,
+                      "perturbed": 294.7784708909282
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-18T00:00:00",
+                      "baseline": 58.01474944157273,
+                      "perturbed": -162.62199768661034
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-19T00:00:00",
+                      "baseline": 60.431803694356574,
+                      "perturbed": 171.49791929139175
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-20T00:00:00",
+                      "baseline": 49.47557297361768,
+                      "perturbed": -97.53300939332428
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-21T00:00:00",
+                      "baseline": 47.6674169018341,
+                      "perturbed": -65.2419924760415
+                    }
+                  ],
+                  "cutoff": "2024-12-16T00:00:00",
+                  "perturbation": "noise",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with sign_flip",
+                "location": "prediction@2024-12-16T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 700,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-17T00:00:00",
+                      "baseline": 53.59882989078011,
+                      "perturbed": 0.49165282596942106
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-18T00:00:00",
+                      "baseline": 58.01474944157273,
+                      "perturbed": -1.1016152377929629
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-19T00:00:00",
+                      "baseline": 60.431803694356574,
+                      "perturbed": -2.932874635984895
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-20T00:00:00",
+                      "baseline": 49.47557297361768,
+                      "perturbed": -1.4573688856713432
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-21T00:00:00",
+                      "baseline": 47.6674169018341,
+                      "perturbed": 2.8360871053156984
+                    }
+                  ],
+                  "cutoff": "2024-12-16T00:00:00",
+                  "perturbation": "sign_flip",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with nullify",
+                "location": "prediction@2024-12-23T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 700,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-24T00:00:00",
+                      "baseline": 57.468502926312574,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-25T00:00:00",
+                      "baseline": 58.11327119508779,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-26T00:00:00",
+                      "baseline": 58.48385171820994,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-27T00:00:00",
+                      "baseline": 52.66590522826611,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-28T00:00:00",
+                      "baseline": 47.27172585547309,
+                      "perturbed": null
+                    }
+                  ],
+                  "cutoff": "2024-12-23T00:00:00",
+                  "perturbation": "nullify",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with noise",
+                "location": "prediction@2024-12-23T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 700,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-24T00:00:00",
+                      "baseline": 57.468502926312574,
+                      "perturbed": -41.12443692760499
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-25T00:00:00",
+                      "baseline": 58.11327119508779,
+                      "perturbed": 252.64282717630462
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-26T00:00:00",
+                      "baseline": 58.48385171820994,
+                      "perturbed": 261.2290249196244
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-27T00:00:00",
+                      "baseline": 52.66590522826611,
+                      "perturbed": 446.5506361821756
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-28T00:00:00",
+                      "baseline": 47.27172585547309,
+                      "perturbed": 124.79326454185995
+                    }
+                  ],
+                  "cutoff": "2024-12-23T00:00:00",
+                  "perturbation": "noise",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with sign_flip",
+                "location": "prediction@2024-12-23T00:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 700,
+                  "sample": [
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-24T00:00:00",
+                      "baseline": 57.468502926312574,
+                      "perturbed": -1.5217581189523486
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-25T00:00:00",
+                      "baseline": 58.11327119508779,
+                      "perturbed": -2.1514303972765028
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-26T00:00:00",
+                      "baseline": 58.48385171820994,
+                      "perturbed": 5.733674888800415
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-27T00:00:00",
+                      "baseline": 52.66590522826611,
+                      "perturbed": 4.140281691828349
+                    },
+                    {
+                      "id": "item_0",
+                      "ds": "2024-12-28T00:00:00",
+                      "baseline": 47.27172585547309,
+                      "perturbed": 2.7398153233100864
+                    }
+                  ],
+                  "cutoff": "2024-12-23T00:00:00",
+                  "perturbation": "sign_flip",
+                  "prediction_column": "prediction"
+                }
+              }
+            ],
+            "detail": null
+          }
+        ]
+      },
+      "structural_only_report": {
+        "schema_version": "1.0",
+        "spec_name": null,
+        "results": [
+          {
+            "check_id": "cutoff_integrity",
+            "name": "Cutoff integrity",
+            "status": "pass",
+            "summary": "100 series; 5 window(s) well-formed (horizon 7, freq D)",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "known_future_covariates",
+            "name": "Known-future covariates",
+            "status": "pass",
+            "summary": "1 future covariate(s) validated",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "runtime_leakage",
+            "name": "Runtime leakage",
+            "status": "skipped",
+            "summary": "skipped",
+            "violations": [],
+            "detail": "no feature_fn or forecast_fn declared; no runtime coverage"
+          }
+        ]
+      }
+    },
+    {
+      "label": "synthetic_20x120_2windows_forest_1modes",
+      "rows": 2400,
+      "series": 20,
+      "windows": 2,
+      "horizon": 7,
+      "frequency": "D",
+      "modes": [
+        "nullify"
+      ],
+      "model": "RandomForestRegressor(20 trees, depth 6, single thread)",
+      "baseline_planned_calls": 2,
+      "gate_planned_calls": 6,
+      "baseline": {
+        "seconds": [
+          0.07757650001440197,
+          0.1273630409850739,
+          0.07458487499388866,
+          0.0741324580158107,
+          0.07286600000225008
+        ],
+        "median_seconds": 0.07458487499388866,
+        "python_peak_bytes": 372987
+      },
+      "additional_gate": {
+        "seconds": [
+          0.2503708750009537,
+          0.24526304102619179,
+          0.24925087500014342,
+          0.24427245801780373,
+          0.2509938750008587
+        ],
+        "median_seconds": 0.24925087500014342,
+        "python_peak_bytes": 778120
+      },
+      "structural_only": {
+        "seconds": [
+          0.0567350419878494,
+          0.03067554099834524,
+          0.03164804200059734,
+          0.030929708998883143,
+          0.04782537498977035
+        ],
+        "median_seconds": 0.03164804200059734,
+        "python_peak_bytes": 383577
+      },
+      "gate_to_baseline_ratio": 3.3418420962771145,
+      "total_backtest_plus_gate_ratio": 4.341842096277114,
+      "clean_mae": 3.2104196141030426,
+      "injected_leak_mae": null,
+      "clean_report": {
+        "schema_version": "1.0",
+        "spec_name": null,
+        "results": [
+          {
+            "check_id": "cutoff_integrity",
+            "name": "Cutoff integrity",
+            "status": "pass",
+            "summary": "20 series; 2 window(s) well-formed (horizon 7, freq D)",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "known_future_covariates",
+            "name": "Known-future covariates",
+            "status": "pass",
+            "summary": "1 future covariate(s) validated",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "runtime_leakage",
+            "name": "Runtime leakage",
+            "status": "pass",
+            "summary": "no future sensitivity detected; 2 forecast window(s), 1 mode(s) requested",
+            "violations": [],
+            "detail": null
+          }
+        ]
+      },
+      "injected_leak_report": null,
+      "structural_only_report": {
+        "schema_version": "1.0",
+        "spec_name": null,
+        "results": [
+          {
+            "check_id": "cutoff_integrity",
+            "name": "Cutoff integrity",
+            "status": "pass",
+            "summary": "20 series; 2 window(s) well-formed (horizon 7, freq D)",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "known_future_covariates",
+            "name": "Known-future covariates",
+            "status": "pass",
+            "summary": "1 future covariate(s) validated",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "runtime_leakage",
+            "name": "Runtime leakage",
+            "status": "skipped",
+            "summary": "skipped",
+            "violations": [],
+            "detail": "no feature_fn or forecast_fn declared; no runtime coverage"
+          }
+        ]
+      }
+    },
+    {
+      "label": "synthetic_20x120_2windows_forest_3modes",
+      "rows": 2400,
+      "series": 20,
+      "windows": 2,
+      "horizon": 7,
+      "frequency": "D",
+      "modes": [
+        "nullify",
+        "noise",
+        "sign_flip"
+      ],
+      "model": "RandomForestRegressor(20 trees, depth 6, single thread)",
+      "baseline_planned_calls": 2,
+      "gate_planned_calls": 10,
+      "baseline": {
+        "seconds": [
+          0.1625685839971993,
+          0.1831362920056563,
+          0.1460794999729842,
+          0.14483508301782422,
+          0.1523887079965789
+        ],
+        "median_seconds": 0.1523887079965789,
+        "python_peak_bytes": 375118
+      },
+      "additional_gate": {
+        "seconds": [
+          0.9665692909911741,
+          0.9064781670167577,
+          0.9435430000012275,
+          0.9700275000068359,
+          0.9252207500103395
+        ],
+        "median_seconds": 0.9435430000012275,
+        "python_peak_bytes": 829079
+      },
+      "structural_only": {
+        "seconds": [
+          0.03647391698905267,
+          0.03524091700091958,
+          0.03477270799339749,
+          0.03175479100900702,
+          0.03564008299144916
+        ],
+        "median_seconds": 0.03524091700091958,
+        "python_peak_bytes": 383577
+      },
+      "gate_to_baseline_ratio": 6.19168580405846,
+      "total_backtest_plus_gate_ratio": 7.19168580405846,
+      "clean_mae": 3.2104196141030426,
+      "injected_leak_mae": null,
+      "clean_report": {
+        "schema_version": "1.0",
+        "spec_name": null,
+        "results": [
+          {
+            "check_id": "cutoff_integrity",
+            "name": "Cutoff integrity",
+            "status": "pass",
+            "summary": "20 series; 2 window(s) well-formed (horizon 7, freq D)",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "known_future_covariates",
+            "name": "Known-future covariates",
+            "status": "pass",
+            "summary": "1 future covariate(s) validated",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "runtime_leakage",
+            "name": "Runtime leakage",
+            "status": "pass",
+            "summary": "no future sensitivity detected; 2 forecast window(s), 3 mode(s) requested",
+            "violations": [],
+            "detail": null
+          }
+        ]
+      },
+      "injected_leak_report": null,
+      "structural_only_report": {
+        "schema_version": "1.0",
+        "spec_name": null,
+        "results": [
+          {
+            "check_id": "cutoff_integrity",
+            "name": "Cutoff integrity",
+            "status": "pass",
+            "summary": "20 series; 2 window(s) well-formed (horizon 7, freq D)",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "known_future_covariates",
+            "name": "Known-future covariates",
+            "status": "pass",
+            "summary": "1 future covariate(s) validated",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "runtime_leakage",
+            "name": "Runtime leakage",
+            "status": "skipped",
+            "summary": "skipped",
+            "violations": [],
+            "detail": "no feature_fn or forecast_fn declared; no runtime coverage"
+          }
+        ]
+      }
+    },
+    {
+      "label": "M4_hourly_10x240",
+      "rows": 2400,
+      "series": 10,
+      "windows": 2,
+      "horizon": 24,
+      "frequency": "h",
+      "modes": [
+        "nullify",
+        "noise",
+        "sign_flip"
+      ],
+      "model": "LinearRegression",
+      "baseline_planned_calls": 2,
+      "gate_planned_calls": 10,
+      "baseline": {
+        "seconds": [
+          0.17441054197843187,
+          0.11675799998920411,
+          0.12124829101958312,
+          0.11483670899178833,
+          0.11310933399363421
+        ],
+        "median_seconds": 0.11675799998920411,
+        "python_peak_bytes": 398303
+      },
+      "additional_gate": {
+        "seconds": [
+          0.6372572910040617,
+          0.6156432080024388,
+          0.683454583020648,
+          0.6413707090250682,
+          0.5462631249974947
+        ],
+        "median_seconds": 0.6372572910040617,
+        "python_peak_bytes": 820887
+      },
+      "structural_only": {
+        "seconds": [
+          0.03088841598946601,
+          0.027829291997477412,
+          0.027144958992721513,
+          0.03905287498491816,
+          0.028486875002272427
+        ],
+        "median_seconds": 0.028486875002272427,
+        "python_peak_bytes": 370443
+      },
+      "gate_to_baseline_ratio": 5.457932570470417,
+      "total_backtest_plus_gate_ratio": 6.457932570470417,
+      "clean_mae": 1386.8337943823972,
+      "injected_leak_mae": 693.4168971911986,
+      "clean_report": {
+        "schema_version": "1.0",
+        "spec_name": null,
+        "results": [
+          {
+            "check_id": "cutoff_integrity",
+            "name": "Cutoff integrity",
+            "status": "pass",
+            "summary": "10 series; 2 window(s) well-formed (horizon 24, freq h)",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "known_future_covariates",
+            "name": "Known-future covariates",
+            "status": "pass",
+            "summary": "1 future covariate(s) validated",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "runtime_leakage",
+            "name": "Runtime leakage",
+            "status": "pass",
+            "summary": "no future sensitivity detected; 2 forecast window(s), 3 mode(s) requested",
+            "violations": [],
+            "detail": null
+          }
+        ]
+      },
+      "injected_leak_report": {
+        "schema_version": "1.0",
+        "spec_name": null,
+        "results": [
+          {
+            "check_id": "cutoff_integrity",
+            "name": "Cutoff integrity",
+            "status": "pass",
+            "summary": "10 series; 2 window(s) well-formed (horizon 24, freq h)",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "known_future_covariates",
+            "name": "Known-future covariates",
+            "status": "pass",
+            "summary": "1 future covariate(s) validated",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "runtime_leakage",
+            "name": "Runtime leakage",
+            "status": "fail",
+            "summary": "2 forecast window(s), 3 mode(s) requested",
+            "violations": [
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with nullify",
+                "location": "prediction@2024-01-08T23:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 240,
+                  "sample": [
+                    {
+                      "id": "H1",
+                      "ds": "2024-01-09T00:00:00",
+                      "baseline": 780.2619281596653,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "H1",
+                      "ds": "2024-01-09T01:00:00",
+                      "baseline": 753.7797759053226,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "H1",
+                      "ds": "2024-01-09T02:00:00",
+                      "baseline": 740.6179226180682,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "H1",
+                      "ds": "2024-01-09T03:00:00",
+                      "baseline": 714.422092621413,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "H1",
+                      "ds": "2024-01-09T04:00:00",
+                      "baseline": 686.2369821147056,
+                      "perturbed": null
+                    }
+                  ],
+                  "cutoff": "2024-01-08T23:00:00",
+                  "perturbation": "nullify",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with noise",
+                "location": "prediction@2024-01-08T23:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 240,
+                  "sample": [
+                    {
+                      "id": "H1",
+                      "ds": "2024-01-09T00:00:00",
+                      "baseline": 780.2619281596653,
+                      "perturbed": 5967.490677790039
+                    },
+                    {
+                      "id": "H1",
+                      "ds": "2024-01-09T01:00:00",
+                      "baseline": 753.7797759053226,
+                      "perturbed": 13086.291948187114
+                    },
+                    {
+                      "id": "H1",
+                      "ds": "2024-01-09T02:00:00",
+                      "baseline": 740.6179226180682,
+                      "perturbed": 5700.488023392057
+                    },
+                    {
+                      "id": "H1",
+                      "ds": "2024-01-09T03:00:00",
+                      "baseline": 714.422092621413,
+                      "perturbed": -18846.00576340629
+                    },
+                    {
+                      "id": "H1",
+                      "ds": "2024-01-09T04:00:00",
+                      "baseline": 686.2369821147056,
+                      "perturbed": 14275.654808763777
+                    }
+                  ],
+                  "cutoff": "2024-01-08T23:00:00",
+                  "perturbation": "noise",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with sign_flip",
+                "location": "prediction@2024-01-08T23:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 240,
+                  "sample": [
+                    {
+                      "id": "H1",
+                      "ds": "2024-01-09T00:00:00",
+                      "baseline": 780.2619281596653,
+                      "perturbed": 6.261928159665331
+                    },
+                    {
+                      "id": "H1",
+                      "ds": "2024-01-09T01:00:00",
+                      "baseline": 753.7797759053226,
+                      "perturbed": 17.779775905322595
+                    },
+                    {
+                      "id": "H1",
+                      "ds": "2024-01-09T02:00:00",
+                      "baseline": 740.6179226180682,
+                      "perturbed": 22.617922618068178
+                    },
+                    {
+                      "id": "H1",
+                      "ds": "2024-01-09T03:00:00",
+                      "baseline": 714.422092621413,
+                      "perturbed": 48.4220926214129
+                    },
+                    {
+                      "id": "H1",
+                      "ds": "2024-01-09T04:00:00",
+                      "baseline": 686.2369821147056,
+                      "perturbed": 85.2369821147056
+                    }
+                  ],
+                  "cutoff": "2024-01-08T23:00:00",
+                  "perturbation": "sign_flip",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with nullify",
+                "location": "prediction@2024-01-09T23:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 240,
+                  "sample": [
+                    {
+                      "id": "H1",
+                      "ds": "2024-01-10T00:00:00",
+                      "baseline": 777.9628962857539,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "H1",
+                      "ds": "2024-01-10T01:00:00",
+                      "baseline": 755.4894849033024,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "H1",
+                      "ds": "2024-01-10T02:00:00",
+                      "baseline": 742.1984724383561,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "H1",
+                      "ds": "2024-01-10T03:00:00",
+                      "baseline": 718.6121977544691,
+                      "perturbed": null
+                    },
+                    {
+                      "id": "H1",
+                      "ds": "2024-01-10T04:00:00",
+                      "baseline": 685.6142317321512,
+                      "perturbed": null
+                    }
+                  ],
+                  "cutoff": "2024-01-09T23:00:00",
+                  "perturbation": "nullify",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with noise",
+                "location": "prediction@2024-01-09T23:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 240,
+                  "sample": [
+                    {
+                      "id": "H1",
+                      "ds": "2024-01-10T00:00:00",
+                      "baseline": 777.9628962857539,
+                      "perturbed": -22901.707783017282
+                    },
+                    {
+                      "id": "H1",
+                      "ds": "2024-01-10T01:00:00",
+                      "baseline": 755.4894849033024,
+                      "perturbed": 8255.10132113846
+                    },
+                    {
+                      "id": "H1",
+                      "ds": "2024-01-10T02:00:00",
+                      "baseline": 742.1984724383561,
+                      "perturbed": -2402.832680582658
+                    },
+                    {
+                      "id": "H1",
+                      "ds": "2024-01-10T03:00:00",
+                      "baseline": 718.6121977544691,
+                      "perturbed": -14478.765870924859
+                    },
+                    {
+                      "id": "H1",
+                      "ds": "2024-01-10T04:00:00",
+                      "baseline": 685.6142317321512,
+                      "perturbed": 8407.088072016122
+                    }
+                  ],
+                  "cutoff": "2024-01-09T23:00:00",
+                  "perturbation": "noise",
+                  "prediction_column": "prediction"
+                }
+              },
+              {
+                "code": "FG-FORECAST-001",
+                "severity": "critical",
+                "message": "prediction 'prediction' changes when unavailable future inputs are perturbed with sign_flip",
+                "location": "prediction@2024-01-09T23:00:00",
+                "evidence": {
+                  "changed_prediction_rows": 240,
+                  "sample": [
+                    {
+                      "id": "H1",
+                      "ds": "2024-01-10T00:00:00",
+                      "baseline": 777.9628962857539,
+                      "perturbed": 6.962896285753914
+                    },
+                    {
+                      "id": "H1",
+                      "ds": "2024-01-10T01:00:00",
+                      "baseline": 755.4894849033024,
+                      "perturbed": 15.489484903302412
+                    },
+                    {
+                      "id": "H1",
+                      "ds": "2024-01-10T02:00:00",
+                      "baseline": 742.1984724383561,
+                      "perturbed": 20.198472438356134
+                    },
+                    {
+                      "id": "H1",
+                      "ds": "2024-01-10T03:00:00",
+                      "baseline": 718.6121977544691,
+                      "perturbed": 42.61219775446909
+                    },
+                    {
+                      "id": "H1",
+                      "ds": "2024-01-10T04:00:00",
+                      "baseline": 685.6142317321512,
+                      "perturbed": 82.61423173215127
+                    }
+                  ],
+                  "cutoff": "2024-01-09T23:00:00",
+                  "perturbation": "sign_flip",
+                  "prediction_column": "prediction"
+                }
+              }
+            ],
+            "detail": null
+          }
+        ]
+      },
+      "structural_only_report": {
+        "schema_version": "1.0",
+        "spec_name": null,
+        "results": [
+          {
+            "check_id": "cutoff_integrity",
+            "name": "Cutoff integrity",
+            "status": "pass",
+            "summary": "10 series; 2 window(s) well-formed (horizon 24, freq h)",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "known_future_covariates",
+            "name": "Known-future covariates",
+            "status": "pass",
+            "summary": "1 future covariate(s) validated",
+            "violations": [],
+            "detail": null
+          },
+          {
+            "check_id": "runtime_leakage",
+            "name": "Runtime leakage",
+            "status": "skipped",
+            "summary": "skipped",
+            "violations": [],
+            "detail": "no feature_fn or forecast_fn declared; no runtime coverage"
+          }
+        ]
+      }
+    }
+  ],
+  "cutoff_only_scale": [
+    {
+      "series": 100,
+      "periods": 365,
+      "runs": [
+        {
+          "schema_version": "1.0",
+          "backend": "pandas",
+          "series": 100,
+          "periods": 365,
+          "rows": 36500,
+          "elapsed_seconds": 0.070355,
+          "rows_per_second": 518793.84,
+          "status": "pass",
+          "polars_recommended": false,
+          "decision_threshold_rows_per_second": 50000
+        },
+        {
+          "schema_version": "1.0",
+          "backend": "pandas",
+          "series": 100,
+          "periods": 365,
+          "rows": 36500,
+          "elapsed_seconds": 0.079422,
+          "rows_per_second": 459573.05,
+          "status": "pass",
+          "polars_recommended": false,
+          "decision_threshold_rows_per_second": 50000
+        },
+        {
+          "schema_version": "1.0",
+          "backend": "pandas",
+          "series": 100,
+          "periods": 365,
+          "rows": 36500,
+          "elapsed_seconds": 0.06413,
+          "rows_per_second": 569159.73,
+          "status": "pass",
+          "polars_recommended": false,
+          "decision_threshold_rows_per_second": 50000
+        },
+        {
+          "schema_version": "1.0",
+          "backend": "pandas",
+          "series": 100,
+          "periods": 365,
+          "rows": 36500,
+          "elapsed_seconds": 0.061372,
+          "rows_per_second": 594729.71,
+          "status": "pass",
+          "polars_recommended": false,
+          "decision_threshold_rows_per_second": 50000
+        },
+        {
+          "schema_version": "1.0",
+          "backend": "pandas",
+          "series": 100,
+          "periods": 365,
+          "rows": 36500,
+          "elapsed_seconds": 0.056832,
+          "rows_per_second": 642238.63,
+          "status": "pass",
+          "polars_recommended": false,
+          "decision_threshold_rows_per_second": 50000
+        }
+      ]
+    },
+    {
+      "series": 1000,
+      "periods": 365,
+      "runs": [
+        {
+          "schema_version": "1.0",
+          "backend": "pandas",
+          "series": 1000,
+          "periods": 365,
+          "rows": 365000,
+          "elapsed_seconds": 0.603999,
+          "rows_per_second": 604305.72,
+          "status": "pass",
+          "polars_recommended": false,
+          "decision_threshold_rows_per_second": 50000
+        },
+        {
+          "schema_version": "1.0",
+          "backend": "pandas",
+          "series": 1000,
+          "periods": 365,
+          "rows": 365000,
+          "elapsed_seconds": 0.744969,
+          "rows_per_second": 489953.36,
+          "status": "pass",
+          "polars_recommended": false,
+          "decision_threshold_rows_per_second": 50000
+        },
+        {
+          "schema_version": "1.0",
+          "backend": "pandas",
+          "series": 1000,
+          "periods": 365,
+          "rows": 365000,
+          "elapsed_seconds": 0.732733,
+          "rows_per_second": 498135.21,
+          "status": "pass",
+          "polars_recommended": false,
+          "decision_threshold_rows_per_second": 50000
+        },
+        {
+          "schema_version": "1.0",
+          "backend": "pandas",
+          "series": 1000,
+          "periods": 365,
+          "rows": 365000,
+          "elapsed_seconds": 0.662503,
+          "rows_per_second": 550941.28,
+          "status": "pass",
+          "polars_recommended": false,
+          "decision_threshold_rows_per_second": 50000
+        },
+        {
+          "schema_version": "1.0",
+          "backend": "pandas",
+          "series": 1000,
+          "periods": 365,
+          "rows": 365000,
+          "elapsed_seconds": 0.66871,
+          "rows_per_second": 545827.21,
+          "status": "pass",
+          "polars_recommended": false,
+          "decision_threshold_rows_per_second": 50000
+        }
+      ]
+    },
+    {
+      "series": 3000,
+      "periods": 365,
+      "runs": [
+        {
+          "schema_version": "1.0",
+          "backend": "pandas",
+          "series": 3000,
+          "periods": 365,
+          "rows": 1095000,
+          "elapsed_seconds": 2.106359,
+          "rows_per_second": 519854.52,
+          "status": "pass",
+          "polars_recommended": false,
+          "decision_threshold_rows_per_second": 50000
+        },
+        {
+          "schema_version": "1.0",
+          "backend": "pandas",
+          "series": 3000,
+          "periods": 365,
+          "rows": 1095000,
+          "elapsed_seconds": 1.861934,
+          "rows_per_second": 588098.21,
+          "status": "pass",
+          "polars_recommended": false,
+          "decision_threshold_rows_per_second": 50000
+        },
+        {
+          "schema_version": "1.0",
+          "backend": "pandas",
+          "series": 3000,
+          "periods": 365,
+          "rows": 1095000,
+          "elapsed_seconds": 2.337607,
+          "rows_per_second": 468427.79,
+          "status": "pass",
+          "polars_recommended": false,
+          "decision_threshold_rows_per_second": 50000
+        },
+        {
+          "schema_version": "1.0",
+          "backend": "pandas",
+          "series": 3000,
+          "periods": 365,
+          "rows": 1095000,
+          "elapsed_seconds": 2.178832,
+          "rows_per_second": 502562.82,
+          "status": "pass",
+          "polars_recommended": false,
+          "decision_threshold_rows_per_second": 50000
+        },
+        {
+          "schema_version": "1.0",
+          "backend": "pandas",
+          "series": 3000,
+          "periods": 365,
+          "rows": 1095000,
+          "elapsed_seconds": 2.045045,
+          "rows_per_second": 535440.59,
+          "status": "pass",
+          "polars_recommended": false,
+          "decision_threshold_rows_per_second": 50000
+        }
+      ]
+    }
+  ],
+  "original_mutation_corpus": {
+    "schema_version": "1.0",
+    "cases": [
+      {
+        "case": "causal_lag",
+        "expected": "pass",
+        "actual": "pass",
+        "correct": true,
+        "codes": []
+      },
+      {
+        "case": "centered_window",
+        "expected": "fail",
+        "actual": "fail",
+        "correct": true,
+        "codes": [
+          "FG-LEAK-001"
+        ]
+      },
+      {
+        "case": "whole_series_scaler",
+        "expected": "fail",
+        "actual": "fail",
+        "correct": true,
+        "codes": [
+          "FG-LEAK-001"
+        ]
+      },
+      {
+        "case": "recursive_forecast",
+        "expected": "pass",
+        "actual": "pass",
+        "correct": true,
+        "codes": []
+      },
+      {
+        "case": "actual_weather",
+        "expected": "fail",
+        "actual": "fail",
+        "correct": true,
+        "codes": [
+          "FG-FORECAST-001"
+        ]
+      },
+      {
+        "case": "teacher_forcing",
+        "expected": "fail",
+        "actual": "fail",
+        "correct": true,
+        "codes": [
+          "FG-FORECAST-001"
+        ]
+      },
+      {
+        "case": "planned_promo",
+        "expected": "pass",
+        "actual": "pass",
+        "correct": true,
+        "codes": []
+      }
+    ],
+    "correct": 7,
+    "total": 7,
+    "all_correct": true
+  }
+}

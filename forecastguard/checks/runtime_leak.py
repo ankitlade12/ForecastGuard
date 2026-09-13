@@ -12,6 +12,7 @@ from forecastguard.checks.comparison import aggregate, indexed_output, same_shap
 from forecastguard.checks.comparison import changed_columns as _changed_columns
 from forecastguard.checks.forecast_leak import ForecastPerturbationCheck
 from forecastguard.checks.protocol import CheckContext
+from forecastguard.execution import finish_coverage, initialize_coverage, invoke_feature, mark_probe
 from forecastguard.models.report import CheckResult, CheckStatus, Severity, Violation
 from forecastguard.models.spec import ForecastSpec
 from forecastguard.perturb import perturb_unknowns
@@ -25,6 +26,7 @@ class RuntimeLeakageCheck:
 
     def run(self, ctx: CheckContext) -> CheckResult:
         """Aggregate configured feature- and forecast-level perturbations."""
+        initialize_coverage(ctx)
         budget = self.check_budget(
             ctx, int(ctx.feature_fn is not None) + int(ctx.forecast_fn is not None)
         )
@@ -74,7 +76,13 @@ class RuntimeLeakageCheck:
             return self._skip("can't parse timestamps/cutoff (the cutoff check reports this)")
 
         rolling = bool(spec.cutoffs)
-        results = [self._run_window(ctx, cutoff, rolling=rolling) for cutoff in cutoffs]
+        results = []
+        for cutoff in cutoffs:
+            result = self._run_window(ctx, cutoff, rolling=rolling)
+            finish_coverage(
+                ctx, result.detail or result.summary, component="feature", cutoff=cutoff
+            )
+            results.append(result)
         return aggregate(
             results,
             f"feature probes: {len(cutoffs)} window(s), {len(spec.perturbations)} mode(s) requested",
@@ -94,8 +102,12 @@ class RuntimeLeakageCheck:
             return self._skip("no pre-cutoff rows to compare")
 
         try:
-            full_pre = _pre_cutoff_features(feature_fn(frame.copy(deep=True)), spec, cutoff)
-            repeat_pre = _pre_cutoff_features(feature_fn(frame.copy(deep=True)), spec, cutoff)
+            full_pre = _pre_cutoff_features(
+                invoke_feature(ctx, frame.copy(deep=True)), spec, cutoff
+            )
+            repeat_pre = _pre_cutoff_features(
+                invoke_feature(ctx, frame.copy(deep=True)), spec, cutoff
+            )
         except Exception as exc:
             return self._skip(
                 f"feature_fn raised ({type(exc).__name__}: {exc}) — cannot prove leakage"
@@ -132,7 +144,7 @@ class RuntimeLeakageCheck:
                 seed=spec.perturbation_seed + mode_index,
             )
             try:
-                perturbed_out = feature_fn(perturbed)
+                perturbed_out = invoke_feature(ctx, perturbed)
             except Exception as exc:
                 probes.append(
                     self._skip(f"{cutoff.isoformat()}/{mode}: {type(exc).__name__}: {exc}")
@@ -159,6 +171,7 @@ class RuntimeLeakageCheck:
                 )
             )
             leaking = _changed_columns(full_pre, perturbed_pre)
+            mark_probe(ctx, "feature", cutoff, mode, failed=bool(leaking), rows=len(full_pre))
             violations.extend(
                 Violation(
                     code="FG-LEAK-001",

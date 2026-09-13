@@ -326,3 +326,35 @@ Polars is therefore not added.
 
 **Why:** CI integrations must not develop divergent verdict logic, and another
 dataframe backend is complexity without measured need.
+
+---
+
+### D-020 — Setup and planning never infer availability or execute user code
+**2026-09-12 · Accepted**
+
+`init` suggests structural mappings but requires explicit future/static roles.
+Generated MLForecast wrappers use a labelled reference model or a supplied
+unfitted model factory. `plan` loads data and revision sidecars only; READY is
+static readiness, not a runtime verdict. Coverage is per configured boundary,
+origin and mode, with counts of actual executions and explicit scope notes.
+
+### D-021 — Diagnostics are bounded explanations; replay expands the boundary
+**2026-09-12 · Accepted**
+
+Single-input diagnostic probes run only after behavioural failures, with a
+separate cap constrained by remaining total runtime calls. They never create,
+clear or replace a gate verdict. `pipeline_factory` creates a fresh object for
+each execution and receives raw history plus the current horizon, bringing
+preprocessing/fitting inside the probe when implemented there. Consecutive
+singleton reuse skips. This is not process or external-state isolation.
+
+### D-022 — Revision histories enforce an explicit latest-available policy
+**2026-09-12 · Accepted**
+
+Revision sidecars use spec identity/time columns and configurable value/publication
+columns. At each origin, compare supplied training inputs and declared future
+horizon inputs to the latest published version. Scoring targets are excluded.
+Missing publication evidence, ambiguity and mismatches are distinct outcomes.
+The check is composed into known-future validation and never repairs data.
+Stale versions also fail this declared policy; that is a snapshot-contract
+violation, not universal behavioural evidence of future leakage.

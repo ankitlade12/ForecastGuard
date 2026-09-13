@@ -6,6 +6,31 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Documentation and onboarding
+- Source-first quickstart with runnable clean/leaky examples and explicit exit codes.
+- User documentation index, configuration/CLI references, CI guide, troubleshooting,
+  support matrix and examples catalog.
+- Updated contribution, security and issue-reporting instructions and release runbook.
+- Optional-dependency CI now exercises generated MLForecast onboarding as well as
+  the existing real-model integration.
+
+### Adoption and replay
+- Guided `init` creates a validated YAML spec and optional runnable MLForecast
+  wrapper with explicit covariate declarations and custom column mappings.
+- `plan` validates data without importing user code and reports primary calls,
+  diagnostic limits, origins, and unmet requirements.
+- Reports add per-origin/component/mode coverage, actual call counts, scope notes,
+  targeted diagnostics and CLI rerun commands. `run --origin` narrows a rerun to
+  configured raw-history origins.
+- Optional `--diagnose` performs bounded single-input probes after a proven leak;
+  diagnostic failures cannot replace the primary verdict.
+- `pipeline_factory` reconstructs preprocessing/model instances for every probe.
+  External state remains outside automatic isolation.
+- Revision sidecars enforce a declared latest-available snapshot per origin;
+  `FG-REV-001/002/003` report malformed history, unavailable values and mismatches.
+- Reproducible local feasibility corpus and model-cost measurements are documented
+  in `docs/BENCHMARK_FEASIBILITY.md`.
+
 ### Fixed
 - Runtime probes isolate in-place functions and snapshot reused output buffers.
   Empty, partial, missing, or non-finite baseline forecasts cannot pass.

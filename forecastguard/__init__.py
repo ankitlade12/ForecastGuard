@@ -18,7 +18,12 @@ from forecastguard.models.report import (
     Severity,
     Violation,
 )
-from forecastguard.models.spec import AvailabilitySpec, ForecastSpec, MLForecastAdapterSpec
+from forecastguard.models.spec import (
+    AvailabilitySpec,
+    ForecastSpec,
+    MLForecastAdapterSpec,
+    RevisionSpec,
+)
 
 __all__ = [
     "AvailabilitySpec",
@@ -27,6 +32,7 @@ __all__ = [
     "ForecastSpec",
     "MLForecastAdapterSpec",
     "Report",
+    "RevisionSpec",
     "Severity",
     "Violation",
 ]

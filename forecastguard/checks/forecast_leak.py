@@ -10,6 +10,8 @@ from forecastguard.checks.comparison import aggregate, changed_columns
 from forecastguard.checks.comparison import indexed_output as _prediction_frame
 from forecastguard.checks.comparison import same_shape as _same_shape
 from forecastguard.checks.protocol import CheckContext
+from forecastguard.execution import finish_coverage, invoke_forecast, mark_probe
+from forecastguard.models.execution import Component
 from forecastguard.models.report import CheckResult, Severity, Violation
 from forecastguard.perturb import perturb_unknowns
 
@@ -33,10 +35,14 @@ class ForecastPerturbationCheck:
         except (ValueError, TypeError, KeyError):
             return self._skip("can't parse timestamps/window configuration")
 
-        results = [
-            self._run_window(ctx, windows.timestamps, cutoff, expected, index)
-            for index, (cutoff, expected) in enumerate(windows.origins)
-        ]
+        component: Component = "pipeline" if spec.pipeline_factory else "forecast"
+        results = []
+        for index, (cutoff, expected) in enumerate(windows.origins):
+            result = self._run_window(ctx, windows.timestamps, cutoff, expected, index)
+            finish_coverage(
+                ctx, result.detail or result.summary, component=component, cutoff=cutoff
+            )
+            results.append(result)
         return aggregate(
             results,
             f"{len(windows.origins)} forecast window(s), {len(spec.perturbations)} mode(s) requested",
@@ -60,10 +66,10 @@ class ForecastPerturbationCheck:
             return self._skip(f"empty train/future input at cutoff {cutoff.isoformat()}")
         try:
             aligned_a = _prediction_frame(
-                forecast_fn(train.copy(), future.copy()), spec.id_col, spec.time_col
+                invoke_forecast(ctx, train.copy(), future.copy()), spec.id_col, spec.time_col
             )
             aligned_b = _prediction_frame(
-                forecast_fn(train.copy(), future.copy()), spec.id_col, spec.time_col
+                invoke_forecast(ctx, train.copy(), future.copy()), spec.id_col, spec.time_col
             )
         except Exception as exc:
             return self._skip(
@@ -99,7 +105,7 @@ class ForecastPerturbationCheck:
                 seed=spec.perturbation_seed + window_index * 1009 + mode_index,
             )
             try:
-                candidate = forecast_fn(train.copy(), perturbed)
+                candidate = invoke_forecast(ctx, train.copy(), perturbed)
             except Exception as exc:
                 probes.append(
                     self._skip(f"{cutoff.isoformat()}/{mode}: {type(exc).__name__}: {exc}")
@@ -117,6 +123,14 @@ class ForecastPerturbationCheck:
                 )
             )
             changed = _changed_predictions(aligned_a, aligned)
+            mark_probe(
+                ctx,
+                "pipeline" if spec.pipeline_factory else "forecast",
+                cutoff,
+                mode,
+                failed=bool(changed),
+                rows=len(aligned_a),
+            )
             for column, detail in sorted(changed.items()):
                 violations.append(
                     Violation(

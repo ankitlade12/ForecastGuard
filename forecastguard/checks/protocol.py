@@ -7,6 +7,7 @@ from functools import cached_property
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from forecastguard.models.adapter import AdapterUsage
+from forecastguard.models.execution import Diagnostic, ProbeCoverage
 from forecastguard.models.hint import SourceHint
 from forecastguard.models.report import CheckResult
 from forecastguard.models.spec import ForecastSpec
@@ -41,6 +42,12 @@ class CheckContext:
     adapter_usage: AdapterUsage | None = None
     adapter_error: str | None = None
     source_hints: list[SourceHint] = field(default_factory=list)
+    revision_frames: dict[str, pd.DataFrame] = field(default_factory=dict)
+    revision_error: str | None = None
+    coverage: list[ProbeCoverage] = field(default_factory=list)
+    runtime_calls: int = 0
+    diagnostic_calls: int = 0
+    diagnostics: list[Diagnostic] = field(default_factory=list)
 
     @cached_property
     def windows(self) -> PreparedWindows:
