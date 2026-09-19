@@ -1,38 +1,41 @@
-# Examples
+# Runnable examples
 
-## quickstart
+Run these commands from the repository root after the [source install](../README.md#try-a-working-example).
+The table uses `uv run`; with a direct pip installation, use `forecastguard` instead.
+Exit `1` is intentional for failure examples.
 
-A minimal Nixtla frame + spec so you can run the gate immediately:
+| Example | Command | Expected result |
+|---|---|---|
+| Clean pipeline replay | `uv run forecastguard run --spec examples/adoption/replay-clean.yaml --strict` | Exit 0; all checks pass |
+| Leaky preprocessing | `uv run forecastguard run --spec examples/adoption/replay-leaky.yaml --strict` | Exit 1; `FG-FORECAST-001`, target diagnostics |
+| Explain weather sensitivity | `uv run forecastguard run --spec examples/adoption/diagnostics.yaml --strict --diagnose` | Exit 1; weather changes predictions |
+| Historical snapshot at an early origin | `uv run forecastguard run --spec examples/adoption/revisions.yaml --origin 2024-01-04 --strict` | Exit 0 |
+| Same snapshot at all configured origins | `uv run forecastguard run --spec examples/adoption/revisions.yaml --strict` | Exit 1; `FG-REV-003` at the later origin |
+| Plan without running user code | `uv run forecastguard plan --spec examples/adoption/replay-clean.yaml` | Exit 0; 10 primary calls planned |
+| Clean feature function | `uv run forecastguard run --spec examples/runtime_leakage/clean.yaml --strict` | Exit 0 |
+| Leaky feature function | `uv run forecastguard run --spec examples/runtime_leakage/leaky.yaml --strict` | Exit 1; `FG-LEAK-001` |
+| Materialized Nixtla CV | `uv run forecastguard run --spec examples/nixtla_rolling/cv.yaml` | Exit 0 with runtime SKIPPED; strict mode would exit 1 |
+
+The [adoption guide](../docs/ADOPTION_GUIDE.md) walks through the first five workflows.
+Inspect [their pipeline implementations](adoption/pipelines.py) to see exactly
+which preprocessing is inside the tested interface.
+
+For a real fitted MLForecast integration, install the extra and run:
 
 ```bash
-forecastguard run --spec examples/quickstart/forecastguard.yaml
+uv sync --extra nixtla
+uv run --extra nixtla forecastguard run --spec examples/nixtla_rolling/runtime.yaml --strict
 ```
 
-Cutoff integrity and known-future covariates **run and pass** on this clean spec;
-runtime leakage **skips loudly** because `feature_fn` is intentionally omitted.
-Exit code is `0`; add `--strict` to make the loud skip fail.
+See the [rolling-origin tutorial](../docs/tutorials/nixtla-rolling.md) for model
+inspection, CV output and repeated-fitting costs. Bundled examples use synthetic
+data; the separate [feasibility benchmark](../docs/BENCHMARK_FEASIBILITY.md)
+documents the external M4 subset used in its measurements.
 
-## cutoff_integrity/ — clean → broken
+## Additional focused examples
 
-Demonstrates the deterministic cutoff check: a clean spec that passes, and a
-corrupted one that fails with `FG-CUTOFF-001/003/004`. See its
-[README](cutoff_integrity/README.md).
-
-## known_future/ — clean → broken
-
-Demonstrates the declared availability contract: a clean spec, and one whose
-`future_covariates` declaration is inconsistent with the data
-(`FG-FUTURE-001/002`). See its [README](known_future/README.md).
-
-## runtime_leakage/ — leaky → clean (the moat)
-
-The headline demo: a real `feature_fn` that reads across the cutoff (`leaky.yaml`)
-vs. one that doesn't (`clean.yaml`), over the same data. The leaky run fails with
-`FG-LEAK-001`; the clean run passes all three checks. See its
-[README](runtime_leakage/README.md).
-
-## nixtla_rolling/ — rolling raw history + CV output
-
-Runnable `cutoffs` and MLForecast-style `cutoff_col` examples, plus a script
-that regenerates real `MLForecast.cross_validation` output. See the
-[tutorial](../docs/tutorials/nixtla-rolling.md).
+- [Cutoff integrity](cutoff_integrity/README.md): clean versus broken timestamp/horizon contracts.
+- [Known-future covariates](known_future/README.md): valid versus inconsistent input declarations.
+- [Feature leakage](runtime_leakage/README.md): causal features versus centered/full-series calculations.
+- [Structural-only quickstart spec](quickstart/forecastguard.yaml): omits a runtime callable,
+  so runtime SKIPPED is intentional and strict mode exits 1.

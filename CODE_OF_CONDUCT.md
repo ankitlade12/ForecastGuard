@@ -24,8 +24,9 @@ permission.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to the maintainers. All complaints will be reviewed and investigated
-promptly and fairly.
+reported privately to [ankitlade12@gmail.com](mailto:ankitlade12@gmail.com), with
+the subject `ForecastGuard conduct report`. Reports will be reviewed fairly and
+handled with respect for the reporter's privacy.
 
 This Code of Conduct is adapted from the
 [Contributor Covenant](https://www.contributor-covenant.org), version 2.1.

@@ -7,7 +7,7 @@ help:
 	@echo "  make test      Run pytest"
 	@echo "  make lint      ruff check + ruff format --check + mypy strict"
 	@echo "  make format    Auto-fix lint issues and format code"
-	@echo "  make cli-demo  Run the CLI against examples/quickstart"
+	@echo "  make cli-demo  Run the clean replay example with strict gating"
 	@echo "  make build     Build the wheel + sdist"
 	@echo "  make clean     Remove caches and build artifacts"
 
@@ -27,7 +27,7 @@ format:
 	uv run ruff format forecastguard/ tests/
 
 cli-demo:
-	uv run forecastguard run --spec examples/quickstart/forecastguard.yaml
+	uv run forecastguard run --spec examples/adoption/replay-clean.yaml --strict
 
 build:
 	uv build

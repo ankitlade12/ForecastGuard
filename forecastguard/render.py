@@ -35,6 +35,12 @@ def report_to_sarif(report: Report) -> dict[str, object]:
                 "properties": {
                     "forecastguardSchemaVersion": report.schema_version,
                     "checks": [result.model_dump(mode="json") for result in report.results],
+                    "coverage": [entry.model_dump(mode="json") for entry in report.coverage],
+                    "diagnostics": [entry.model_dump(mode="json") for entry in report.diagnostics],
+                    "runtimeCalls": report.runtime_calls,
+                    "diagnosticCalls": report.diagnostic_calls,
+                    "scopeNotes": report.scope_notes,
+                    "rerunCommand": report.rerun_command,
                 },
             }
         ],
@@ -80,7 +86,38 @@ def github_step_summary(report: Report) -> str:
         )
     violations = sum(len(result.violations) for result in report.results)
     lines.extend(["", f"Violations: **{violations}** · Schema: `{report.schema_version}`", ""])
+    lines.extend(line.replace("|", "\\|") for line in execution_summary_lines(report))
+    lines.append("")
     return "\n".join(lines)
+
+
+def execution_summary_lines(report: Report) -> list[str]:
+    """Present coverage and explanatory diagnostics consistently across text outputs."""
+    completed = sum(entry.status in {"pass", "fail"} for entry in report.coverage)
+    lines = [
+        f"Runtime coverage: {completed}/{len(report.coverage)} requested comparisons completed; "
+        f"{report.runtime_calls} executions ({report.diagnostic_calls} diagnostic)."
+    ]
+    for entry in report.coverage[:20]:
+        lines.append(
+            f"  {entry.component} @ {entry.cutoff} / {entry.mode}: {entry.status.upper()}"
+            + (f" — {entry.detail}" if entry.detail else "")
+        )
+    if len(report.coverage) > 20:
+        lines.append(f"  {len(report.coverage) - 20} further coverage entries in the JSON report.")
+    for diagnostic in report.diagnostics:
+        if diagnostic.status == "unchanged":
+            continue
+        lines.append(
+            f"Diagnostic {diagnostic.status.upper()} @ {diagnostic.cutoff}: {diagnostic.detail}"
+        )
+        if diagnostic.suggestion:
+            lines.append(f"  Investigate: {diagnostic.suggestion}")
+    for note in report.scope_notes:
+        lines.append(f"Scope: {note}")
+    if report.rerun_command:
+        lines.append(f"Rerun: {report.rerun_command}")
+    return lines
 
 
 def _sarif_result(violation: Violation) -> dict[str, Any]:

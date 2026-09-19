@@ -74,6 +74,10 @@ def changed_columns(
                 equal_nan=True,
             )
         else:
+            if isinstance(left.dtype, pd.CategoricalDtype) or isinstance(
+                right.dtype, pd.CategoricalDtype
+            ):
+                left, right = left.astype(object), right.astype(object)
             equal = left.eq(right).fillna(False) | (left.isna() & right.isna())
             mask = ~equal.to_numpy(dtype=bool)
         positions = np.flatnonzero(mask)

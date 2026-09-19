@@ -20,6 +20,7 @@ def perturb_unknowns(
     mode: PerturbationMode,
     *,
     seed: int,
+    columns: list[str] | None = None,
 ) -> pd.DataFrame:
     """Perturb target and past-only dynamic covariates on selected rows.
 
@@ -30,7 +31,11 @@ def perturb_unknowns(
     keep = {spec.id_col, spec.time_col, *spec.future_covariates, *spec.static_covariates}
     if spec.cutoff_col is not None:
         keep.add(spec.cutoff_col)
-    columns = [column for column in frame.columns if column not in keep]
+    columns = [
+        column
+        for column in frame.columns
+        if column not in keep and (columns is None or column in columns)
+    ]
     perturbed = frame.copy()
     rng = np.random.default_rng(seed)
     for column in columns:

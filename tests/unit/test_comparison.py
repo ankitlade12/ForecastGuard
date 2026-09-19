@@ -36,6 +36,14 @@ def test_comparison_cannot_silently_intersect_different_rows() -> None:
         changed_columns(indexed, indexed.head(1))
 
 
+def test_categorical_features_compare_values_not_category_dictionaries() -> None:
+    frame = pd.DataFrame({"id": ["A", "A"], "time": pd.date_range("2024-01-01", periods=2)})
+    left = indexed_output(frame.assign(feature=pd.Categorical(["a", "a"])), "id", "time")
+    right = indexed_output(frame.assign(feature=pd.Categorical(["a", "b"])), "id", "time")
+    assert left is not None and right is not None
+    assert changed_columns(left, right)["feature"]["changed_pre_cutoff_rows"] == 1
+
+
 def test_aggregation_preserves_errors() -> None:
     result = aggregate([CheckResult.errored("runtime_leakage", "Runtime", "failed")], "probe")
     assert result.status is CheckStatus.ERROR

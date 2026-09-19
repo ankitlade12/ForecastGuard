@@ -85,6 +85,8 @@ authoritative schema. It declares:
 - `future_covariates` — what the user *declares* will be known at predict time
 - optional point-in-time `availability` timestamp contracts
 - optional `feature_fn`, `forecast_fn`, fitted `adapter`, perturbation modes/seed
+- optional fresh `pipeline_factory`, bounded diagnostic probes, and publication-time
+  `revisions` sidecars (see [adoption guide](ADOPTION_GUIDE.md))
 
 ## 8. The verdict (output)
 

@@ -38,7 +38,8 @@ from __future__ import annotations
 import pandas as pd
 
 from forecastguard.checks.protocol import CheckContext
-from forecastguard.models.report import CheckResult, Severity, Violation
+from forecastguard.checks.revisions import check_revisions
+from forecastguard.models.report import CheckResult, CheckStatus, Severity, Violation
 from forecastguard.windows import holdout_mask
 
 
@@ -188,16 +189,20 @@ class KnownFutureCovariatesCheck:
                     )
 
         undeclared = [c for c in covariate_cols if c not in set(declared)]
+        revision_result = check_revisions(ctx)
+        violations.extend(revision_result.violations)
 
         if violations:
             count = len(violations)
             plural = "s" if count != 1 else ""
-            return CheckResult.failed(
+            result = CheckResult.failed(
                 self.check_id,
                 self.name,
                 f"{count} future-covariate contract violation{plural}",
                 violations,
             )
+            result.detail = revision_result.detail
+            return result
 
         if ctx.adapter_error is not None:
             return CheckResult.skipped(
@@ -206,10 +211,14 @@ class KnownFutureCovariatesCheck:
                 f"adapter introspection failed — {ctx.adapter_error}",
             )
 
+        if revision_result.status is CheckStatus.SKIPPED:
+            return revision_result
+
         return CheckResult.passed(
             self.check_id,
             self.name,
-            _pass_summary(present_declared, undeclared, holdout_checked),
+            _pass_summary(present_declared, undeclared, holdout_checked)
+            + (f"; {revision_result.summary}" if spec.revisions else ""),
         )
 
 

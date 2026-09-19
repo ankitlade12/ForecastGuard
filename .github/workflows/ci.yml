@@ -39,8 +39,8 @@ jobs:
       - name: Build distributions
         run: uv build
 
-      - name: Real MLForecast integration
-        run: uv run --extra dev --extra nixtla --python ${{ matrix.python-version }} pytest tests/integration/test_mlforecast_real.py
+      - name: Real MLForecast integration and generated onboarding
+        run: uv run --extra dev --extra nixtla --python ${{ matrix.python-version }} pytest tests/integration/test_mlforecast_real.py tests/integration/test_adoption_workflow.py
 
       - name: Verify wheel and sdist metadata
         run: uvx twine check dist/*

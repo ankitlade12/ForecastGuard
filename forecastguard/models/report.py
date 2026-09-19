@@ -12,6 +12,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from forecastguard.models.execution import Diagnostic, ProbeCoverage
+
 
 class Severity(StrEnum):
     """Severity of a single violation."""
@@ -108,6 +110,12 @@ class Report(BaseModel):
     schema_version: Literal["1.0"] = "1.0"
     spec_name: str | None = None
     results: list[CheckResult] = Field(default_factory=list)
+    coverage: list[ProbeCoverage] = Field(default_factory=list)
+    runtime_calls: int = 0
+    diagnostic_calls: int = 0
+    diagnostics: list[Diagnostic] = Field(default_factory=list)
+    scope_notes: list[str] = Field(default_factory=list)
+    rerun_command: str | None = None
 
     @property
     def failed(self) -> bool:

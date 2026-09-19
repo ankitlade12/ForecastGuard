@@ -19,8 +19,12 @@ from forecastguard.checks import (
     RuntimeLeakageCheck,
     default_checks,
 )
+from forecastguard.diagnostics import diagnose
+from forecastguard.execution import components, finish_coverage, initialize_coverage
 from forecastguard.explain import source_hints
+from forecastguard.models.execution import Diagnostic
 from forecastguard.models.report import CheckResult, CheckStatus, Report
+from forecastguard.replay import replay_forecast
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
@@ -71,11 +75,25 @@ def _load_adapter(ctx: CheckContext) -> None:
 def _load_callables(ctx: CheckContext) -> None:
     ctx.feature_fn = _resolve_callable(ctx.spec.feature_fn) if ctx.spec.feature_fn else None
     ctx.forecast_fn = _resolve_callable(ctx.spec.forecast_fn) if ctx.spec.forecast_fn else None
+    if ctx.spec.pipeline_factory:
+        ctx.forecast_fn = replay_forecast(_resolve_callable(ctx.spec.pipeline_factory), ctx.spec)
+
+
+def data_context(spec: ForecastSpec, *, frame: pd.DataFrame | None = None) -> CheckContext:
+    """Load data and revision sidecars without importing executable configuration."""
+    ctx = CheckContext(spec=spec, frame=_load_frame(spec.data) if frame is None else frame)
+    for revision in spec.revisions:
+        try:
+            ctx.revision_frames[revision.column] = _load_frame(revision.data)
+        except (OSError, ValueError, ImportError) as exc:
+            ctx.revision_error = f"{revision.data}: {type(exc).__name__}: {exc}"
+    initialize_coverage(ctx)
+    return ctx
 
 
 def build_context(spec: ForecastSpec, *, frame: pd.DataFrame | None = None) -> CheckContext:
     """Load all resources for callers managing their own check sequence."""
-    ctx = CheckContext(spec=spec, frame=_load_frame(spec.data) if frame is None else frame)
+    ctx = data_context(spec, frame=frame)
     _load_adapter(ctx)
     _load_callables(ctx)
     _load_hints(ctx)
@@ -103,9 +121,9 @@ def run_checks(spec: ForecastSpec, checks: Sequence[Check] | None = None) -> Rep
     """
     if checks is not None:
         ctx = build_context(spec)
-        return Report(spec_name=spec.name, results=[_run_check(check, ctx) for check in checks])
+        return _report(ctx, [_run_check(check, ctx) for check in checks])
 
-    ctx = CheckContext(spec=spec, frame=_load_frame(spec.data))
+    ctx = data_context(spec)
     results: list[CheckResult] = []
     for check in default_checks():
         prerequisites_pass = all(result.status is CheckStatus.PASS for result in results)
@@ -130,13 +148,39 @@ def run_checks(spec: ForecastSpec, checks: Sequence[Check] | None = None) -> Rep
                 _load_adapter(ctx)
                 result = _run_check(check, ctx)
         results.append(result)
-    return Report(spec_name=spec.name, results=results)
+    return _report(ctx, results)
+
+
+def _report(ctx: CheckContext, results: list[CheckResult]) -> Report:
+    runtime = next((result for result in results if result.check_id == "runtime_leakage"), None)
+    finish_coverage(
+        ctx, (runtime.detail or runtime.summary) if runtime else "runtime check not requested"
+    )
+    notes = [
+        "Coverage includes configured origins and modes only; unconfigured origins are untested.",
+        "External files, globals and caches are not isolated.",
+    ]
+    if not components(ctx.spec):
+        notes.append("No runtime boundary configured; only structural/availability checks ran.")
+    elif not ctx.spec.pipeline_factory:
+        notes.append("Preprocessing and fitting outside configured callables are untested.")
+    if ctx.spec.cutoff_col:
+        notes.append("CV output has no raw training history for behavioural replay.")
+    return Report(
+        spec_name=ctx.spec.name,
+        results=results,
+        coverage=ctx.coverage,
+        runtime_calls=ctx.runtime_calls,
+        diagnostic_calls=ctx.diagnostic_calls,
+        diagnostics=ctx.diagnostics,
+        scope_notes=notes,
+    )
 
 
 def _run_runtime(ctx: CheckContext) -> CheckResult:
     spec = ctx.spec
     check = RuntimeLeakageCheck()
-    if spec.feature_fn is None and spec.forecast_fn is None:
+    if not components(spec):
         return CheckResult.skipped(
             check.check_id, check.name, "no feature_fn or forecast_fn declared; no runtime coverage"
         )
@@ -145,13 +189,23 @@ def _run_runtime(ctx: CheckContext) -> CheckResult:
             check.check_id, check.name, "CV output has no raw history for runtime probes"
         )
     try:
-        budget = check.check_budget(
-            ctx, int(spec.feature_fn is not None) + int(spec.forecast_fn is not None)
-        )
+        budget = check.check_budget(ctx, len(components(spec)))
         if budget is not None:
             return budget
         _load_callables(ctx)
         result = _run_check(check, ctx)
+        if spec.diagnostics and result.violations:
+            try:
+                diagnose(ctx, result)
+            except Exception as exc:
+                ctx.diagnostics.append(
+                    Diagnostic(
+                        component="pipeline" if spec.pipeline_factory else "forecast",
+                        cutoff="unknown",
+                        status="skipped",
+                        detail=f"diagnostics unavailable: {type(exc).__name__}: {exc}",
+                    )
+                )
         if result.violations:
             _load_hints(ctx)
             for violation in result.violations:

@@ -23,6 +23,16 @@ def load_spec(path: str | Path) -> ForecastSpec:
     if not isinstance(raw, dict):
         raise ValueError(f"spec file {path} must contain a top-level mapping")
     spec = ForecastSpec.model_validate(raw)
+    spec = spec.model_copy(
+        update={
+            "revisions": [
+                revision.model_copy(update={"data": (path.parent / revision.data).resolve()})
+                if not revision.data.is_absolute()
+                else revision
+                for revision in spec.revisions
+            ]
+        }
+    )
     if not spec.data.is_absolute():
         spec = spec.model_copy(update={"data": (path.parent / spec.data).resolve()})
     if (

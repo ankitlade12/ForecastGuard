@@ -1,8 +1,8 @@
 # Contributing to ForecastGuard
 
-Thanks for considering a contribution! ForecastGuard is a narrow, high-trust
-gate — the bar is correctness and high-precision failures, so contributions lean on
-tests and clear scope.
+ForecastGuard contributions focus on reproducible behaviour, useful diagnostics
+and honest coverage. Documentation fixes, minimal leakage examples and integration
+reports are welcome alongside code changes.
 
 ## Code of Conduct
 
@@ -18,6 +18,9 @@ participating, you agree to uphold it.
   [docs/DECISIONS.md](docs/DECISIONS.md), D-002).
 - **Pull requests** — welcome and reviewed.
 
+For usage questions, start with [support](SUPPORT.md). Report security problems
+privately using [SECURITY.md](SECURITY.md). Remove private data from reproductions.
+
 ## Branching & commits
 
 - Branches: `feature/<slug>`, `fix/<slug>`, `docs/<slug>`, `test/<slug>`,
@@ -31,14 +34,28 @@ Python 3.12, [uv](https://docs.astral.sh/uv/)-managed.
 
 ```bash
 git clone https://github.com/ankitlade12/ForecastGuard.git
-cd forecastguard
-uv sync --extra dev          # create venv + install deps
+cd ForecastGuard
+uv sync --extra dev --extra nixtla
 uv run pre-commit install    # gate commits with ruff + mypy + unit tests
 
-make test                    # pytest
+make test                    # core pytest suite
 make lint                    # ruff check + ruff format --check + mypy strict
-make cli-demo                # run the CLI against examples/quickstart
+make cli-demo                # run the clean replay example with strict gating
+uv run --extra dev --extra nixtla pytest tests/integration/test_mlforecast_real.py tests/integration/test_adoption_workflow.py
 ```
+
+The last command verifies the real MLForecast path and generated wrappers. Include
+the `nixtla` extra on commands that need it; a plain uv sync/run may remove extras.
+Once dependencies are installed, `uv run --no-sync` preserves that environment.
+Core tests may skip optional integrations when their dependencies are absent.
+
+## Documentation changes
+
+Start with the [documentation index](docs/README.md). Keep the README focused on
+the first successful run; put configuration detail in the reference guides.
+Run changed commands, check relative links, and state expected nonzero exits for
+intentional failures. Describe support using evidence from tests or measurements.
+Do not infer compatibility from a framework name alone.
 
 ## Adding a new check
 
@@ -56,6 +73,7 @@ make cli-demo                # run the CLI against examples/quickstart
 ## Pull request checklist
 
 - [ ] Tests added/updated and `make test` passes.
+- [ ] Relevant optional integrations ran with their extras installed.
 - [ ] `make lint` passes (ruff + mypy strict).
 - [ ] Docs updated if behavior or the spec/report contract changed.
 - [ ] `CHANGELOG.md` `[Unreleased]` updated.

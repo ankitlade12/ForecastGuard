@@ -44,7 +44,8 @@ forecastguard = "forecastguard.cli:app"
 [project.urls]
 Homepage = "https://github.com/ankitlade12/ForecastGuard"
 Repository = "https://github.com/ankitlade12/ForecastGuard"
-Documentation = "https://github.com/ankitlade12/ForecastGuard/tree/main/docs"
+Documentation = "https://github.com/ankitlade12/ForecastGuard/blob/main/docs/README.md"
+Issues = "https://github.com/ankitlade12/ForecastGuard/issues"
 Changelog = "https://github.com/ankitlade12/ForecastGuard/blob/main/CHANGELOG.md"
 
 [build-system]
@@ -99,7 +100,7 @@ warn_unused_ignores = true
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-module = ["pandas.*", "yaml.*", "numpy.*", "mlforecast.*"]
+module = ["pandas.*", "yaml.*", "numpy.*", "mlforecast.*", "sklearn.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
