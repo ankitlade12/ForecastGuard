@@ -32,6 +32,13 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   in `docs/BENCHMARK_FEASIBILITY.md`.
 
 ### Fixed
+- Replay receives the explicit configured origin, including business-day origins
+  that share a horizon. Diagnostics use the same origin.
+- Revision validation compares exact stored values rather than applying runtime
+  prediction tolerances; large numeric revisions can no longer pass unnoticed.
+- Categorical comparisons use values rather than requiring identical category dictionaries.
+- Coverage accounting indexes each component/origin instead of rescanning all
+  probes. Revision histories are sorted once, and explicit init frequencies skip inference.
 - Runtime probes isolate in-place functions and snapshot reused output buffers.
   Empty, partial, missing, or non-finite baseline forecasts cannot pass.
 - A later unsupported perturbation no longer erases established leakage; partial

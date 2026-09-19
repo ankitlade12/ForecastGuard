@@ -40,6 +40,7 @@ def check_revisions(ctx: CheckContext) -> CheckResult:
                 )
             if versions.duplicated([*keys, contract.available_at_col]).any():
                 raise ValueError("multiple versions share the same id/time/publication timestamp")
+            versions = versions.sort_values(contract.available_at_col)
             windows = ctx.windows
             audited = 0
             for cutoff, expected in windows.origins:
@@ -57,11 +58,7 @@ def check_revisions(ctx: CheckContext) -> CheckResult:
                 supplied[spec.time_col] = pd.to_datetime(supplied[spec.time_col])
                 supplied = supplied.set_index(keys)[column]
                 eligible = versions.loc[versions[contract.available_at_col].le(cutoff)]
-                latest = (
-                    eligible.sort_values(contract.available_at_col)
-                    .drop_duplicates(keys, keep="last")
-                    .set_index(keys)
-                )
+                latest = eligible.drop_duplicates(keys, keep="last").set_index(keys)
                 available = supplied.index.isin(latest.index)
                 for code, selected, explanation in [
                     ("FG-REV-002", ~available, "no version was published by the forecast origin"),
@@ -70,21 +67,9 @@ def check_revisions(ctx: CheckContext) -> CheckResult:
                     actual = supplied.loc[selected]
                     reference = latest[contract.value_col].reindex(actual.index)
                     if code == "FG-REV-003":
-                        if pd.api.types.is_numeric_dtype(actual) and pd.api.types.is_numeric_dtype(
-                            reference
-                        ):
-                            different = ~np.isclose(
-                                actual.to_numpy(dtype=float, na_value=np.nan),
-                                reference.to_numpy(dtype=float, na_value=np.nan),
-                                rtol=1e-5,
-                                atol=1e-8,
-                                equal_nan=True,
-                            )
-                        else:
-                            different = ~(
-                                actual.eq(reference).fillna(False)
-                                | (actual.isna() & reference.isna())
-                            )
+                        different = ~actual.astype(object).eq(reference.astype(object)).fillna(
+                            False
+                        )
                         actual, reference = actual.loc[different], reference.loc[different]
                     if not actual.empty:
                         violations.append(

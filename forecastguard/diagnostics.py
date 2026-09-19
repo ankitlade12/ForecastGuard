@@ -56,18 +56,23 @@ def diagnose(ctx: CheckContext, result: CheckResult) -> None:
         if component == "feature":
             frame = ctx.frame
             mask = ds.gt(cutoff)
-
-            def execute(data: pd.DataFrame, training: pd.DataFrame | None = None) -> pd.DataFrame:
-                return invoke_feature(ctx, data.copy(deep=True))
+            train = None
         else:
             expected = next(grid for value, grid in ctx.windows.origins if value == cutoff)
             train = ctx.frame.loc[ds.le(cutoff)].copy()
             frame = ctx.frame.loc[ds.isin(expected)].copy()
             mask = pd.Series(True, index=frame.index)
 
-            def execute(data: pd.DataFrame, training: pd.DataFrame | None = train) -> pd.DataFrame:
-                assert training is not None
-                return invoke_forecast(ctx, training.copy(deep=True), data.copy(deep=True))
+        def execute(
+            data: pd.DataFrame,
+            training: pd.DataFrame | None = train,
+            anchor: pd.Timestamp = cutoff,
+            boundary: Component = component,
+        ) -> pd.DataFrame:
+            if boundary == "feature":
+                return invoke_feature(ctx, data.copy(deep=True))
+            assert training is not None
+            return invoke_forecast(ctx, training.copy(deep=True), data.copy(deep=True), anchor)
 
         def aligned(
             data: pd.DataFrame, boundary: Component = component, anchor: pd.Timestamp = cutoff

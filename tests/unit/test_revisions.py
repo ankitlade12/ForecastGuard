@@ -52,6 +52,17 @@ def test_original_value_passes_and_scoring_targets_are_excluded() -> None:
     assert KnownFutureCovariatesCheck().run(context()).status.value == "pass"
 
 
+@pytest.mark.parametrize("original,revised", [(1_000_000_000, 1_000_001_000), (2**54, 2**54 + 1)])
+def test_revision_contract_does_not_tolerate_distinct_numeric_versions(
+    original: int, revised: int
+) -> None:
+    ctx = context()
+    ctx.frame["sales"] = [revised, 20, 999]
+    ctx.revision_frames["sales"]["amount"] = [original, revised, 20]
+    result = KnownFutureCovariatesCheck().run(ctx)
+    assert "FG-REV-003" in {v.code for v in result.violations}
+
+
 def test_later_revision_fails_with_expected_value_and_origin() -> None:
     result = KnownFutureCovariatesCheck().run(context(15))
     assert result.status.value == "fail"
@@ -74,6 +85,13 @@ def test_no_version_published_by_origin_fails() -> None:
     ctx = context()
     ctx.revision_frames["sales"]["published"] = ["2024-01-05", "2024-01-06", "2024-01-05"]
     assert "FG-REV-002" in {v.code for v in KnownFutureCovariatesCheck().run(ctx).violations}
+
+
+def test_categorical_revisions_compare_values() -> None:
+    ctx = context()
+    ctx.frame["sales"] = pd.Categorical(["old", "unchanged", "scoring"])
+    ctx.revision_frames["sales"]["amount"] = pd.Categorical(["old", "new", "unchanged"])
+    assert KnownFutureCovariatesCheck().run(ctx).status.value == "pass"
 
 
 def test_missing_sidecar_does_not_hide_a_loaded_history_violation() -> None:

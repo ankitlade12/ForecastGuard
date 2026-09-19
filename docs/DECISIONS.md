@@ -358,3 +358,8 @@ Missing publication evidence, ambiguity and mismatches are distinct outcomes.
 The check is composed into known-future validation and never repairs data.
 Stale versions also fail this declared policy; that is a snapshot-contract
 violation, not universal behavioural evidence of future leakage.
+
+**2026-09-19 clarification:** revision identity uses exact stored-value equality,
+not the relative floating-point tolerance used for runtime predictions. Inputs
+and sidecars must use consistent numeric representations. This prevents large
+values from hiding a distinct revision within a proportional tolerance.

@@ -170,8 +170,10 @@ and publication-time names. Paths resolve relative to the YAML file. Each
 At every origin, the check selects the newest version with publication timestamp
 at or before the origin. It compares that version with supplied training values.
 For declared future covariates it also checks horizon inputs. Future target
-values used only for scoring are excluded. Comparison uses existing numeric
-tolerances (rtol 1e-5, atol 1e-8), or exact nonnumeric equality.
+values used only for scoring are excluded. Revision values must match exactly:
+the runtime probe's floating-point tolerances do not establish version identity.
+Use the same numeric representation in the supplied data and sidecar, rather than
+rounding one independently. Runtime prediction comparisons retain their tolerances.
 
 | Code | Meaning |
 |---|---|

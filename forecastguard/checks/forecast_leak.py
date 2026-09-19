@@ -66,10 +66,14 @@ class ForecastPerturbationCheck:
             return self._skip(f"empty train/future input at cutoff {cutoff.isoformat()}")
         try:
             aligned_a = _prediction_frame(
-                invoke_forecast(ctx, train.copy(), future.copy()), spec.id_col, spec.time_col
+                invoke_forecast(ctx, train.copy(), future.copy(), cutoff),
+                spec.id_col,
+                spec.time_col,
             )
             aligned_b = _prediction_frame(
-                invoke_forecast(ctx, train.copy(), future.copy()), spec.id_col, spec.time_col
+                invoke_forecast(ctx, train.copy(), future.copy(), cutoff),
+                spec.id_col,
+                spec.time_col,
             )
         except Exception as exc:
             return self._skip(
@@ -105,7 +109,7 @@ class ForecastPerturbationCheck:
                 seed=spec.perturbation_seed + window_index * 1009 + mode_index,
             )
             try:
-                candidate = invoke_forecast(ctx, train.copy(), perturbed)
+                candidate = invoke_forecast(ctx, train.copy(), perturbed, cutoff)
             except Exception as exc:
                 probes.append(
                     self._skip(f"{cutoff.isoformat()}/{mode}: {type(exc).__name__}: {exc}")

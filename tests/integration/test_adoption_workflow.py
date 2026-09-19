@@ -75,6 +75,35 @@ def test_init_requires_explicit_availability_and_preserves_files(tmp_path: Path)
     assert output.read_text() == "keep me"
 
 
+def test_explicit_init_frequency_does_not_scan_series_for_inference(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def unexpected(*args: object) -> None:
+        pytest.fail("frequency inference ran despite an explicit --freq")
+
+    monkeypatch.setattr("forecastguard.cli.infer_frequency", unexpected)
+    result = CliRunner().invoke(
+        app,
+        [
+            "init",
+            "--data",
+            str(write_data(tmp_path)),
+            "--output",
+            str(tmp_path / "spec.yaml"),
+            "--horizon",
+            "2",
+            "--freq",
+            "D",
+            "--future-covariates",
+            "",
+            "--static-covariates",
+            "",
+            "--no-input",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+
+
 def test_plan_does_not_import_user_code_and_reports_blocked_budget(tmp_path: Path) -> None:
     data = write_data(tmp_path)
     path = tmp_path / "spec.yaml"

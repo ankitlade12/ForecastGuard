@@ -49,10 +49,11 @@ def mark_probe(
     rows: int,
 ) -> None:
     """Mark an actually completed comparison, independently of other modes."""
-    for entry in ctx.coverage:
-        if (entry.component, entry.cutoff, entry.mode) == (component, cutoff.isoformat(), mode):
+    for entry in ctx.coverage_by_window.get((component, cutoff.isoformat()), []):
+        if entry.mode == mode:
             entry.status = "fail" if failed else "pass"
             entry.compared_rows = rows
+            return
 
 
 def finish_coverage(
@@ -63,11 +64,17 @@ def finish_coverage(
     cutoff: pd.Timestamp | None = None,
 ) -> None:
     """Keep incomplete requested comparisons visible after failed prerequisites."""
-    for entry in ctx.coverage:
+    origin = cutoff.isoformat() if cutoff is not None else None
+    entries = (
+        ctx.coverage_by_window.get((component, origin), [])
+        if component is not None and origin is not None
+        else ctx.coverage
+    )
+    for entry in entries:
         if (
             entry.status == "not_run"
             and (component is None or entry.component == component)
-            and (cutoff is None or entry.cutoff == cutoff.isoformat())
+            and (origin is None or entry.cutoff == origin)
         ):
             entry.status = "skipped"
             entry.detail = reason
@@ -80,8 +87,12 @@ def invoke_feature(ctx: CheckContext, frame: pd.DataFrame) -> pd.DataFrame:
     return ctx.feature_fn(frame)
 
 
-def invoke_forecast(ctx: CheckContext, train: pd.DataFrame, future: pd.DataFrame) -> pd.DataFrame:
+def invoke_forecast(
+    ctx: CheckContext, train: pd.DataFrame, future: pd.DataFrame, cutoff: pd.Timestamp
+) -> pd.DataFrame:
     """Count a forecast or full-pipeline execution even when it raises."""
     assert ctx.forecast_fn is not None
     ctx.runtime_calls += 1
+    if ctx.spec.pipeline_factory:
+        return ctx.forecast_fn(train, future, cutoff=cutoff)
     return ctx.forecast_fn(train, future)

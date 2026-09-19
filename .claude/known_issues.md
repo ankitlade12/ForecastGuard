@@ -3,6 +3,17 @@
 Accumulated across sessions. Add an entry whenever a fix wasn't obvious from the
 error alone: record the **error signature** and the **resolution**.
 
+## 2026-09-19 — Replay origins and coverage scaling
+
+**Signature:** valid Saturday/Sunday business-day origins share the same Monday
+horizon, so reconstructing the origin from the first forecast timestamp skips
+both windows. Coverage bookkeeping also rescanned every requested probe for
+each result, making reporting quadratic in the number of origins.
+
+**Resolution:** pass the configured cutoff through execution to replay, including
+diagnostics. Index coverage by component/origin once; regression tests verify
+distinct origins and bounded entry traversal without timing-dependent assertions.
+
 ## 2026-09-12 — Missing revision history suppressed other evidence
 
 **Signature:** with multiple revision contracts, one missing sidecar returned

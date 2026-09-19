@@ -269,8 +269,8 @@ def init_command(
             if no_input:
                 raise ValueError("--horizon is required with --no-input")
             horizon = click.prompt("Forecast horizon", type=click.IntRange(min=1))
-        suggestion_freq = infer_frequency(frame, id_col, time_col)
         if freq is None:
+            suggestion_freq = infer_frequency(frame, id_col, time_col)
             freq = (
                 suggestion_freq
                 if no_input

@@ -7,7 +7,7 @@ from functools import cached_property
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from forecastguard.models.adapter import AdapterUsage
-from forecastguard.models.execution import Diagnostic, ProbeCoverage
+from forecastguard.models.execution import Component, Diagnostic, ProbeCoverage
 from forecastguard.models.hint import SourceHint
 from forecastguard.models.report import CheckResult
 from forecastguard.models.spec import ForecastSpec
@@ -52,6 +52,13 @@ class CheckContext:
     @cached_property
     def windows(self) -> PreparedWindows:
         return prepare_windows(self.spec, self.frame)
+
+    @cached_property
+    def coverage_by_window(self) -> dict[tuple[Component, str], list[ProbeCoverage]]:
+        grouped: dict[tuple[Component, str], list[ProbeCoverage]] = {}
+        for entry in self.coverage:
+            grouped.setdefault((entry.component, entry.cutoff), []).append(entry)
+        return grouped
 
 
 @runtime_checkable
