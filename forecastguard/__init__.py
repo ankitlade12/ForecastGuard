@@ -24,6 +24,8 @@ from forecastguard.models.spec import (
     MLForecastAdapterSpec,
     RevisionSpec,
 )
+from forecastguard.replay import ReplayPipeline
+from forecastguard.runner import run_checks
 
 __all__ = [
     "AvailabilitySpec",
@@ -31,10 +33,12 @@ __all__ = [
     "CheckStatus",
     "ForecastSpec",
     "MLForecastAdapterSpec",
+    "ReplayPipeline",
     "Report",
     "RevisionSpec",
     "Severity",
     "Violation",
+    "run_checks",
 ]
 
 __version__ = "0.1.0"

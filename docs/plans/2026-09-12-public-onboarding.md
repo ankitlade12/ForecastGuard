@@ -1,5 +1,8 @@
 # Public onboarding and documentation
 
+> Historical implementation record. Status and verification below are as of this
+> plan's date; see the [current roadmap](../../ROADMAP.md) and [plan index](README.md).
+
 Use AgentArmor as a reference for discoverability, compatibility evidence and
 community entry points. Improve ForecastGuard in this checkout; do not modify
 AgentArmor or publish either repository.

@@ -18,7 +18,7 @@ backtest look best. The agent has no nose for "this 19 is a lie."
 
 ## 2. The product
 
-An open-source **CLI** and **GitHub Action** that validates the *user-side*
+An open-source **Python library, CLI and GitHub Action** that validates the *user-side*
 forecasting pipeline before its backtest is trusted. Three checks, deliberately
 narrow:
 
@@ -73,11 +73,13 @@ passing silently. Materialized CV output cannot recreate raw pre-origin history.
 
 ## 7. The contract (input)
 
-A run is driven by a `forecastguard.yaml` spec — see
+A run is driven by a typed `ForecastSpec`, created in Python or loaded from
+`forecastguard.yaml` — see
 [`forecastguard/models/spec.py`](../forecastguard/models/spec.py) for the
 authoritative schema. It declares:
 
-- `data` — the long-format dataset (one row per series × timestamp)
+- `data` — the long-format dataset path (one row per series × timestamp);
+  Python callers may instead supply `frame` directly to `run_checks`
 - `id_col` / `time_col` / `target_col` — Nixtla defaults `unique_id` / `ds` / `y`
 - exactly one of `cutoff` (single raw history), `cutoffs` (rolling raw history),
   or `cutoff_col` (materialized Nixtla CV output)
@@ -87,6 +89,9 @@ authoritative schema. It declares:
 - optional `feature_fn`, `forecast_fn`, fitted `adapter`, perturbation modes/seed
 - optional fresh `pipeline_factory`, bounded diagnostic probes, and publication-time
   `revisions` sidecars (see [adoption guide](ADOPTION_GUIDE.md))
+
+The [Python API](PYTHON_API.md) accepts callable objects directly; YAML uses
+import references. Both enter the same validation engine (D-023).
 
 ## 8. The verdict (output)
 
@@ -101,10 +106,11 @@ GitHub annotations, and the step summary all render the same typed report.
 | Slice | Deliverable |
 |---|---|
 | **1 — Foundation** | Package skeleton, Pydantic contract, Check protocol, runner, CLI, docs ✅ |
-| **2** | Cutoff-integrity check (deterministic) + tests + leaky→clean example |
-| **3** | Known-future covariates check (declared availability contract) |
-| **4** | Runtime-leakage check (behavioural perturbation) — the moat |
+| **2** | Cutoff-integrity check (deterministic) + tests + leaky→clean example ✅ |
+| **3** | Known-future covariates check (declared availability contract) ✅ |
+| **4** | Runtime-leakage check (behavioural perturbation) — the moat ✅ |
 | **5** | Action hardening, README asset, Nixtla tutorial, release automation ✅ locally |
 | **P1–P3** | Rolling/Nixtla, MLForecast adapter, forecast perturbation, availability, evidence/benchmarks ✅ |
-| **Release** | GitHub/PyPI publication (maintainer credentials required) |
+| **Adoption + Python API** | Setup, coverage, diagnostics, replay, revisions, and direct DataFrame/callable inputs ✅ |
+| **Release** | Review/merge, publishing setup, first GitHub/PyPI release |
 | **Later** | Hosted CI tier, additional framework adapters |

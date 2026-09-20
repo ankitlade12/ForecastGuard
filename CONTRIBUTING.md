@@ -27,6 +27,9 @@ privately using [SECURITY.md](SECURITY.md). Remove private data from reproductio
   `chore/<slug>`.
 - Conventional commits (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`,
   `chore:`). One logical change per commit.
+- `main` requires a PR, one approving review, up-to-date passing CI, and resolved
+  conversations, including for admins. New commits dismiss prior approvals.
+  Force pushes and deletion are blocked. See [branch protection](docs/CI.md#main-branch-protection).
 
 ## Local development setup
 
@@ -56,6 +59,10 @@ the first successful run; put configuration detail in the reference guides.
 Run changed commands, check relative links, and state expected nonzero exits for
 intentional failures. Describe support using evidence from tests or measurements.
 Do not infer compatibility from a framework name alone.
+
+The [plan archive](docs/plans/README.md) and dated benchmark/research reports
+preserve historical evidence. Label historical status clearly; use the roadmap
+and current user guides for today's supported behavior and remaining work.
 
 ## Adding a new check
 

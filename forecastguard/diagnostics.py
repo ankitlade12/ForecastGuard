@@ -25,7 +25,7 @@ def diagnose(ctx: CheckContext, result: CheckResult) -> None:
         if violation.code == "FG-LEAK-001":
             component = "feature"
         elif violation.code == "FG-FORECAST-001":
-            component = "pipeline" if spec.pipeline_factory else "forecast"
+            component = "pipeline" if ctx.uses_pipeline else "forecast"
         else:
             continue
         cutoff = violation.evidence.get("cutoff")

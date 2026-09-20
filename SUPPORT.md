@@ -13,8 +13,9 @@ Community support is best effort; no response-time or production support SLA is 
 Include:
 
 1. ForecastGuard and Python versions, OS, and relevant model-library versions.
-2. The command, exit code, and expected versus actual result.
-3. A small synthetic or anonymized CSV, YAML and callable that reproduce it.
+2. The command or Python API call, exit code/report, and expected versus actual result.
+3. A small synthetic or anonymized DataFrame + Python callable, or CSV + YAML,
+   that reproduces it.
 4. Relevant violation codes and coverage entries from `--format json`.
 
 Run `forecastguard --version` and `python --version` in the same environment used

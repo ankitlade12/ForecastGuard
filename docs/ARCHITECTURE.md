@@ -8,7 +8,7 @@ One-page entry point for anyone (human or AI) working in this repo.
 |---|---|
 | **Product intent, the 3 checks, scope, GTM** | [`ForecastGuard_PRD.md`](./ForecastGuard_PRD.md) — the canonical product spec |
 | **Engineering decisions, rationale, tradeoffs** | [`DECISIONS.md`](./DECISIONS.md) — living decision log, dated entries |
-| **What's planned / in flight** | [`plans/`](./plans/) — dated slice plans |
+| **What's planned / in flight** | [Roadmap](../ROADMAP.md); [dated plan archive](plans/README.md) |
 | **The input contract** | [`forecastguard/models/spec.py`](../forecastguard/models/spec.py) |
 | **The output contract** | [`forecastguard/models/report.py`](../forecastguard/models/report.py) |
 | **How to set up and use the library** | [User documentation](README.md) |
@@ -18,6 +18,12 @@ The PRD describes the product as intended. DECISIONS.md captures engineering
 judgment that fills gaps or evolves beyond the PRD.
 
 ## Data flow
+
+The public `forecastguard.run_checks(spec, frame=..., feature_fn=...,
+forecast_fn=..., pipeline_factory=...)` API accepts in-memory data and direct
+callables. The serializable spec describes the validation contract; direct
+callables live in `CheckContext`. File-based CLI runs enter the same runner.
+See [Python API](PYTHON_API.md) for precedence and conflict rules.
 
 `init` scaffolds validated configuration and optional MLForecast callables.
 `planning.plan_execution` uses `runner.data_context` to load data and revision
@@ -32,7 +38,8 @@ diagnostic fields are additive to schema 1.0 and retained by all renderers.
 See [the adoption guide](ADOPTION_GUIDE.md) for contracts and complete examples.
 
 The default runner validates structure and declared covariates before importing
-user code. Failed prerequisites produce a runtime SKIP and a failing gate. Only
+or invoking user code. Failed prerequisites produce a runtime SKIP; prerequisite
+FAIL/ERROR results always block, while SKIPPED results block in strict mode. Only
 valid inputs reach optional model inspection, then budgeted runtime execution.
 Explicit custom check sequences retain the caller's order and prerequisites.
 
@@ -66,7 +73,7 @@ origins per series. It cannot discover an entirely omitted series/window without
 an external roster of expected pairs.
 
 ```
-forecastguard.yaml
+forecastguard.yaml or Python ForecastSpec + DataFrame/callables
       │  config.load_spec()
       ▼
   ForecastSpec ───────────────► runner.run_checks()
@@ -140,7 +147,7 @@ docs/                    # PRD, ARCHITECTURE, DECISIONS, plans
 5. **Skip loudly, never pass silently (D-006).** A missing precondition (e.g. no
    `feature_fn`) yields a prominent `SKIPPED`, not a green check.
 6. **The exit code is the gate (D-007).** `fail`/`error` → exit 1. `--strict`
-   promotes loud skips to failures. A clean run is the only exit 0.
+   promotes loud skips to failures. Without strict mode, PASS/SKIPPED runs can exit 0.
 7. **Honest scope.** Detects common, high-impact errors — not "all leakage."
 
 ## Testing philosophy

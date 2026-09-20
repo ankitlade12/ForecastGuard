@@ -64,7 +64,8 @@ class ForecastSpec(BaseModel):
     Attributes:
         name: Optional human label for the spec, surfaced in the report.
         data: Path to the dataset (``.csv`` or ``.parquet``) in long Nixtla
-            format — one row per (series, timestamp).
+            format — one row per (series, timestamp). May be omitted when
+            passing ``frame`` directly to ``run_checks``.
         id_col: Series identifier column. Nixtla default ``unique_id``.
         time_col: Timestamp column. Nixtla default ``ds``.
         target_col: Target column. Nixtla default ``y``.
@@ -94,7 +95,7 @@ class ForecastSpec(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: str | None = None
-    data: Path
+    data: Path | None = None
     id_col: str = Field(default="unique_id", min_length=1)
     time_col: str = Field(default="ds", min_length=1)
     target_col: str = Field(default="y", min_length=1)

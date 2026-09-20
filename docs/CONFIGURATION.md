@@ -32,7 +32,7 @@ max_probe_calls: 10
 | Field | Default / requirement | Meaning |
 |---|---|---|
 | `name` | Optional | Label included in reports |
-| `data` | Required | CSV or Parquet path; Parquet needs the `parquet` extra |
+| `data` | Required in YAML; optional with Python `frame` | CSV or Parquet path; Parquet needs the `parquet` extra |
 | `id_col`, `time_col`, `target_col` | `unique_id`, `ds`, `y` | Series identifier, event timestamp and target |
 | `horizon` | Required positive integer | Number of future periods to validate |
 | `freq` | Required | pandas frequency such as `D`, `MS` or `W-MON` |
@@ -124,6 +124,11 @@ loading/fitting is outside the runtime probe count. Only load trusted code and
 model artifacts; see [SECURITY.md](../SECURITY.md).
 
 ## Python API
+
+For DataFrames and callable objects without YAML, use the
+[Python API guide](PYTHON_API.md). `ForecastSpec.data` may be omitted when you
+pass `frame` to `forecastguard.run_checks`; YAML specs still require `data`.
+The existing file-based interface remains available:
 
 ```python
 from forecastguard.config import load_spec

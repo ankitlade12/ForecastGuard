@@ -6,6 +6,8 @@ Exit `1` is intentional for failure examples.
 
 | Example | Command | Expected result |
 |---|---|---|
+| Python library, pandas | `uv run python examples/python_api/pandas_example.py` | Clean passes; intentional leak fails; script asserts both |
+| Python library, MLForecast | `uv run --extra nixtla python examples/python_api/mlforecast_example.py` | Real rolling forecast passes; intentional leak fails |
 | Clean pipeline replay | `uv run forecastguard run --spec examples/adoption/replay-clean.yaml --strict` | Exit 0; all checks pass |
 | Leaky preprocessing | `uv run forecastguard run --spec examples/adoption/replay-leaky.yaml --strict` | Exit 1; `FG-FORECAST-001`, target diagnostics |
 | Explain weather sensitivity | `uv run forecastguard run --spec examples/adoption/diagnostics.yaml --strict --diagnose` | Exit 1; weather changes predictions |

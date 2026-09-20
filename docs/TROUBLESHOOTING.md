@@ -9,7 +9,8 @@ spec and callable against the [configuration contracts](CONFIGURATION.md).
 |---|---|
 | `forecastguard: command not found` | Run inside the installed environment; use `uv run forecastguard --help` from a synced checkout |
 | MLForecast import error | Install `uv sync --extra nixtla` and retain `--extra nixtla` on subsequent uv commands |
-| Module reference cannot import | Use `module:callable`; CLI searches the spec directory and working directory; Python API callers need importable modules |
+| Module reference cannot import | Use `module:callable`; CLI searches the spec directory and working directory; Python callers can make modules importable or pass callable objects directly |
+| Python API reports conflicting callable sources | Supply a direct function or a spec reference for each role, not both; replay cannot be combined with feature/forecast functions |
 | Init refuses to write | Use a new output name; it never overwrites an existing spec or generated wrapper |
 | Unattended init requests covariate roles | Supply both `--future-covariates ''` and `--static-covariates ''` if neither applies |
 | Plan is READY but run fails | Plan validates data only; it does not import callables or verify runtime dependencies |

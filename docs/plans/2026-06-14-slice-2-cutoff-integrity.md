@@ -1,5 +1,8 @@
 # Slice 2 — Cutoff integrity
 
+> Historical implementation record. Status and verification below are as of this
+> plan's date; see the [current roadmap](../../ROADMAP.md) and [plan index](README.md).
+
 **Date:** 2026-06-14
 **Status:** Delivered
 **Goal:** Implement the deterministic cutoff-integrity check to a zero-false-

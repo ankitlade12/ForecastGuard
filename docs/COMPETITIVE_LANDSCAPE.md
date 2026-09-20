@@ -2,10 +2,14 @@
 
 **Reviewed:** 2026-08-30
 
+This is a dated research snapshot, not a live compatibility or competitor claim.
+Use the [roadmap](../ROADMAP.md) for current priorities and recheck upstream
+documentation before relying on the comparisons below.
+
 ## Executive conclusion
 
 ForecastGuard should remain a specialized trust gate, not become another data
-schema framework or forecasting library. Adjacent tools cover pieces of the
+schema framework or forecasting model-training library. Adjacent tools cover pieces of the
 workflow, but none of the reviewed products combines a Nixtla-native
 rolling-origin contract, fitted-feature availability evidence, behavioural
 feature/prediction perturbation, and a CI-blocking typed report.

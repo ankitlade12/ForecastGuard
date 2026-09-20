@@ -6,6 +6,30 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### PyPI release preparation
+- Refresh the README around Python usage, runnable leak detection and concise
+  integration guidance; use absolute documentation links for the PyPI page.
+- The publish workflow requires a commit on `main` and matching tag/source
+  versions, runs real optional integration tests, and uploads the same wheel
+  and sdist that passed metadata and clean-install validation.
+- Document the exact pending-publisher configuration; retain pre-release status
+  until the first upload and registry install are verified.
+
+### Python library API
+- Public `forecastguard.run_checks` accepts an in-memory DataFrame and direct
+  feature/forecast callables or a fresh pipeline factory; `ReplayPipeline` is
+  exported for typed integrations.
+- `ForecastSpec.data` is optional for Python runs with `frame`; YAML continues
+  to require a data path. Conflicting callable sources are rejected explicitly.
+- Direct inputs share the CLI's prerequisite validation, runtime call budgets,
+  diagnostics, coverage and typed reports. No temporary dataset files are needed.
+- Python-first quickstart, pandas/MLForecast examples and installed-wheel CI smoke.
+
+### Documentation audit
+- Refresh the roadmap, maintainer handoff, product/architecture guides and examples
+  for the Python API; label dated plans and measurements as historical records.
+- Document the public repository and enforced main-branch review/CI policy.
+
 ### Documentation and onboarding
 - Source-first quickstart with runnable clean/leaky examples and explicit exit codes.
 - User documentation index, configuration/CLI references, CI guide, troubleshooting,
@@ -98,8 +122,8 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   cutoff integrity, known-future covariates, and runtime leakage.
 - **Slice 4 — Runtime-leakage check (the moat).** `RuntimeLeakageCheck` is now
   implemented (behavioural perturbation): contract-aware future masking, a
-  determinism probe, and a pre-cutoff diff that flags any feature that reads
-  across the cutoff (`FG-LEAK-001`). Forward-looking features over *declared*
+  determinism probe, and a pre-cutoff diff that flags observed sensitivity to
+  unavailable future inputs (`FG-LEAK-001`). Forward-looking features over *declared*
   future covariates are not flagged. Ships with the headline
   `examples/runtime_leakage` (leaky→clean) demo and 10 unit tests. Semantics:
   DECISIONS D-013. **All three checks are now implemented.**
@@ -110,7 +134,7 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `examples/known_future` (clean→broken) and 8 unit tests. Semantics: DECISIONS
   D-012.
 - **Slice 2 — Cutoff-integrity check.** `CutoffIntegrityCheck` is now
-  implemented (deterministic, zero-false-positive): duplicate `(id, ds)`,
+  implemented with deterministic structural rules: duplicate `(id, ds)`,
   missing training history, empty/short/misaligned holdout vs `horizon`/`freq`,
   with structured `FG-CUTOFF-*` evidence. Ships with `examples/cutoff_integrity`
   (clean→broken) and 15 unit tests. Semantics: DECISIONS D-011.
@@ -121,7 +145,9 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   hygiene files, CI + PyPI publish workflows, and the composite GitHub Action.
 
 ### Release status
-- All local P0–P3 and Slice 5 gates are complete. The first GitHub/PyPI release
-  awaits valid maintainer authentication and trusted-publisher setup.
+- The implementation and local distribution checks are complete. The first
+  GitHub/PyPI release awaits review/merge, publisher verification and release
+  approval. See the release runbook; historical credential failures are not a
+  statement about current account access.
 
 [Unreleased]: https://github.com/ankitlade12/ForecastGuard/commits/main

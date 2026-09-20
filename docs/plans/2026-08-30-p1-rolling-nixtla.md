@@ -1,5 +1,8 @@
 # P1 — Rolling-origin Nixtla contract
 
+> Historical implementation record. Status and verification below are as of this
+> plan's date; see the [current roadmap](../../ROADMAP.md) and [plan index](README.md).
+
 **Date:** 2026-08-30
 
 **Status:** Complete

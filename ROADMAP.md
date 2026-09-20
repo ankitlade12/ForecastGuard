@@ -1,7 +1,8 @@
 # Roadmap
 
 ForecastGuard ships in thin, independently useful slices. Status reflects the
-local implementation as of 2026-09-12; publication remains pending.
+implementation in this checkout; publication remains pending.
+[GitHub releases](https://github.com/ankitlade12/ForecastGuard/releases) are the publication record.
 
 ## Implemented
 
@@ -49,9 +50,7 @@ measured ~171k rows/s after grouping optimization, so Polars is not justified.
 GitHub annotations/summary, JSON + SARIF artifacts, hardened composite Action,
 Python 3.12/3.13 CI, Nixtla tutorial, README asset, and release workflow.
 
-## Release pending
-
-### Five adoption features — implemented locally
+### Five adoption features ✅
 
 Guided setup with an optional MLForecast wrapper; data-only execution plans and
 per-probe coverage; budgeted single-input diagnostics; fresh pipeline-factory
@@ -59,11 +58,21 @@ replay; and publication-time revision validation. Existing callables and the
 three-check registry remain supported. See [the adoption guide](docs/ADOPTION_GUIDE.md)
 for runnable examples, contracts and coverage limits.
 
-Local reliability and adoption review is in progress on the feature branch.
-Regression coverage now includes incomplete predictions, in-place functions,
-partial failures and execution budgets. The real MLForecast integration and
-cost benchmark must remain green before release review. First GitHub release
-and PyPI publication remain pending maintainer review and publishing setup.
+### Python library API ✅
+
+Top-level `run_checks` accepts DataFrames, direct feature/forecast functions,
+and fresh pipeline factories. YAML is optional for Python callers. Examples,
+API documentation and installed-wheel CI coverage are included. See
+[the Python guide](docs/PYTHON_API.md) and D-023.
+
+## Release pending
+
+- Review and merge the Python API change through the protected `main` branch.
+- Verify PyPI trusted publishing and curate the first release notes using the
+  [release runbook](docs/RELEASING.md).
+- Publish the first version and test the registry-installed library and Action.
+- Refresh the dated feasibility measurements against the release revision;
+  pilot with independent forecasting pipelines before expanding scope.
 
 ## Later
 - Hosted CI tier — checks on every PR, dashboards.
@@ -71,4 +80,5 @@ and PyPI publication remain pending maintainer review and publishing setup.
 - Polars support after profiling demonstrates the need.
 
 This roadmap mirrors `docs/ForecastGuard_PRD.md` §9 and the slice plans in
-`docs/plans/`.
+the [historical plan index](docs/plans/README.md). Dated plans record what was
+true at implementation time; they are not the current backlog.

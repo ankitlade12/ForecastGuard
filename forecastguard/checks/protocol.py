@@ -48,6 +48,12 @@ class CheckContext:
     runtime_calls: int = 0
     diagnostic_calls: int = 0
     diagnostics: list[Diagnostic] = field(default_factory=list)
+    pipeline_factory: Callable[[], object] | None = None
+
+    @property
+    def uses_pipeline(self) -> bool:
+        """Whether the configured boundary rebuilds a pipeline for every execution."""
+        return self.pipeline_factory is not None or self.spec.pipeline_factory is not None
 
     @cached_property
     def windows(self) -> PreparedWindows:

@@ -49,6 +49,8 @@ def initialize(
     model_factory: str | None = None,
 ) -> InitResult:
     """Validate a generated spec and create new files, never overwrite existing work."""
+    if spec.data is None:
+        raise ValueError("initialization requires a data path for the generated YAML spec")
     output = output.resolve()
     module = re.sub(r"\W", "_", output.stem) + "_pipeline"
     if not module.isidentifier():
@@ -72,6 +74,7 @@ def initialize(
             "output spec or generated wrapper already exists; choose a new output path"
         )
     payload = spec.model_dump(mode="json", exclude_none=True)
+    assert spec.data is not None
     payload["data"] = os.path.relpath(spec.data.resolve(), output.parent)
     contents = [yaml.safe_dump(payload, sort_keys=False)]
     if wrapper:

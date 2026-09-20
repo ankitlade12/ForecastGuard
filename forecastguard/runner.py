@@ -73,15 +73,52 @@ def _load_adapter(ctx: CheckContext) -> None:
 
 
 def _load_callables(ctx: CheckContext) -> None:
-    ctx.feature_fn = _resolve_callable(ctx.spec.feature_fn) if ctx.spec.feature_fn else None
-    ctx.forecast_fn = _resolve_callable(ctx.spec.forecast_fn) if ctx.spec.forecast_fn else None
-    if ctx.spec.pipeline_factory:
-        ctx.forecast_fn = replay_forecast(_resolve_callable(ctx.spec.pipeline_factory), ctx.spec)
+    if ctx.spec.feature_fn:
+        ctx.feature_fn = _resolve_callable(ctx.spec.feature_fn)
+    if ctx.spec.forecast_fn:
+        ctx.forecast_fn = _resolve_callable(ctx.spec.forecast_fn)
+    if ctx.uses_pipeline:
+        factory = ctx.pipeline_factory
+        if factory is None:
+            assert ctx.spec.pipeline_factory is not None
+            factory = _resolve_callable(ctx.spec.pipeline_factory)
+        ctx.forecast_fn = replay_forecast(factory, ctx.spec)
 
 
-def data_context(spec: ForecastSpec, *, frame: pd.DataFrame | None = None) -> CheckContext:
+def data_context(
+    spec: ForecastSpec,
+    *,
+    frame: pd.DataFrame | None = None,
+    feature_fn: Callable[[pd.DataFrame], pd.DataFrame] | None = None,
+    forecast_fn: Callable[[pd.DataFrame, pd.DataFrame], pd.DataFrame] | None = None,
+    pipeline_factory: Callable[[], object] | None = None,
+) -> CheckContext:
     """Load data and revision sidecars without importing executable configuration."""
-    ctx = CheckContext(spec=spec, frame=_load_frame(spec.data) if frame is None else frame)
+    for name, fn in (
+        ("feature_fn", feature_fn),
+        ("forecast_fn", forecast_fn),
+        ("pipeline_factory", pipeline_factory),
+    ):
+        if fn is not None:
+            if not callable(fn):
+                raise TypeError(f"{name} must be callable")
+            if getattr(spec, name) is not None:
+                raise ValueError(f"{name} supplied both in spec and as a Python callable")
+    if (pipeline_factory is not None or spec.pipeline_factory is not None) and (
+        feature_fn is not None or forecast_fn is not None or spec.feature_fn or spec.forecast_fn
+    ):
+        raise ValueError("pipeline_factory is mutually exclusive with feature_fn/forecast_fn")
+    if frame is None:
+        if spec.data is None:
+            raise ValueError("provide frame or set spec.data to a CSV/Parquet path")
+        frame = _load_frame(spec.data)
+    ctx = CheckContext(
+        spec=spec,
+        frame=frame,
+        feature_fn=feature_fn,
+        forecast_fn=forecast_fn,
+        pipeline_factory=pipeline_factory,
+    )
     for revision in spec.revisions:
         try:
             ctx.revision_frames[revision.column] = _load_frame(revision.data)
@@ -101,10 +138,12 @@ def build_context(spec: ForecastSpec, *, frame: pd.DataFrame | None = None) -> C
 
 
 def _load_hints(ctx: CheckContext) -> None:
-    if ctx.feature_fn is not None and ctx.spec.feature_fn is not None:
-        ctx.source_hints.extend(source_hints(ctx.feature_fn, ctx.spec.feature_fn, "feature"))
-    if ctx.forecast_fn is not None and ctx.spec.forecast_fn is not None:
-        ctx.source_hints.extend(source_hints(ctx.forecast_fn, ctx.spec.forecast_fn, "forecast"))
+    if ctx.feature_fn is not None:
+        ref = ctx.spec.feature_fn or str(getattr(ctx.feature_fn, "__qualname__", "feature_fn"))
+        ctx.source_hints.extend(source_hints(ctx.feature_fn, ref, "feature"))
+    if ctx.forecast_fn is not None and not ctx.uses_pipeline:
+        ref = ctx.spec.forecast_fn or str(getattr(ctx.forecast_fn, "__qualname__", "forecast_fn"))
+        ctx.source_hints.extend(source_hints(ctx.forecast_fn, ref, "forecast"))
 
 
 def _run_check(check: Check, ctx: CheckContext) -> CheckResult:
@@ -114,16 +153,51 @@ def _run_check(check: Check, ctx: CheckContext) -> CheckResult:
         return CheckResult.errored(check.check_id, check.name, traceback.format_exc())
 
 
-def run_checks(spec: ForecastSpec, checks: Sequence[Check] | None = None) -> Report:
+def run_checks(
+    spec: ForecastSpec,
+    checks: Sequence[Check] | None = None,
+    *,
+    frame: pd.DataFrame | None = None,
+    feature_fn: Callable[[pd.DataFrame], pd.DataFrame] | None = None,
+    forecast_fn: Callable[[pd.DataFrame, pd.DataFrame], pd.DataFrame] | None = None,
+    pipeline_factory: Callable[[], object] | None = None,
+) -> Report:
     """Validate inputs before loading adapters or executing runtime probes.
 
-    Explicit custom check sequences retain the caller's execution order.
+    Args:
+        spec: Validated window, covariate, and execution contract.
+        checks: Optional custom sequence; retains caller ordering and prerequisites.
+        frame: In-memory data, taking precedence over ``spec.data`` when supplied.
+        feature_fn: Direct ``frame -> features`` callable, including local functions.
+        forecast_fn: Direct ``(train, future) -> predictions`` callable.
+        pipeline_factory: Fresh object factory with ``predict(frame, cutoff, spec)``.
+
+    Returns:
+        A typed report; ``report.exit_code(strict=True)`` blocks skips and failures.
+
+    Raises:
+        ValueError: Missing data or conflicting callable sources/boundaries.
+        TypeError: A supplied function is not callable.
+        OSError: The primary dataset cannot be read.
+
+    Callable objects never enter the serializable spec. A direct callable and a
+    spec reference for the same role are rejected. Replay cannot be combined
+    with feature/forecast functions. Revision sidecars and adapters retain their
+    configured file/import sources. Individual check exceptions become ERRORs.
     """
+    ctx = data_context(
+        spec,
+        frame=frame,
+        feature_fn=feature_fn,
+        forecast_fn=forecast_fn,
+        pipeline_factory=pipeline_factory,
+    )
     if checks is not None:
-        ctx = build_context(spec)
+        _load_adapter(ctx)
+        _load_callables(ctx)
+        _load_hints(ctx)
         return _report(ctx, [_run_check(check, ctx) for check in checks])
 
-    ctx = data_context(spec)
     results: list[CheckResult] = []
     for check in default_checks():
         prerequisites_pass = all(result.status is CheckStatus.PASS for result in results)
@@ -160,9 +234,9 @@ def _report(ctx: CheckContext, results: list[CheckResult]) -> Report:
         "Coverage includes configured origins and modes only; unconfigured origins are untested.",
         "External files, globals and caches are not isolated.",
     ]
-    if not components(ctx.spec):
+    if not components(ctx):
         notes.append("No runtime boundary configured; only structural/availability checks ran.")
-    elif not ctx.spec.pipeline_factory:
+    elif not ctx.uses_pipeline:
         notes.append("Preprocessing and fitting outside configured callables are untested.")
     if ctx.spec.cutoff_col:
         notes.append("CV output has no raw training history for behavioural replay.")
@@ -180,7 +254,7 @@ def _report(ctx: CheckContext, results: list[CheckResult]) -> Report:
 def _run_runtime(ctx: CheckContext) -> CheckResult:
     spec = ctx.spec
     check = RuntimeLeakageCheck()
-    if not components(spec):
+    if not components(ctx):
         return CheckResult.skipped(
             check.check_id, check.name, "no feature_fn or forecast_fn declared; no runtime coverage"
         )
@@ -189,7 +263,7 @@ def _run_runtime(ctx: CheckContext) -> CheckResult:
             check.check_id, check.name, "CV output has no raw history for runtime probes"
         )
     try:
-        budget = check.check_budget(ctx, len(components(spec)))
+        budget = check.check_budget(ctx, len(components(ctx)))
         if budget is not None:
             return budget
         _load_callables(ctx)
@@ -200,7 +274,7 @@ def _run_runtime(ctx: CheckContext) -> CheckResult:
             except Exception as exc:
                 ctx.diagnostics.append(
                     Diagnostic(
-                        component="pipeline" if spec.pipeline_factory else "forecast",
+                        component="pipeline" if ctx.uses_pipeline else "forecast",
                         cutoff="unknown",
                         status="skipped",
                         detail=f"diagnostics unavailable: {type(exc).__name__}: {exc}",

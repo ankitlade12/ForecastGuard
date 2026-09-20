@@ -41,7 +41,7 @@ def plan_execution(spec: ForecastSpec) -> ExecutionPlan:
     except (ValueError, TypeError, KeyError) as exc:
         origins = []
         prerequisites.append(f"invalid origin configuration: {exc}")
-    selected = components(spec)
+    selected = components(ctx)
     calls = 0 if spec.cutoff_col else len(origins) * len(selected) * (2 + len(spec.perturbations))
     budget_exceeded = spec.max_probe_calls is not None and calls > spec.max_probe_calls
     if budget_exceeded:

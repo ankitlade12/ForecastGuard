@@ -1,8 +1,8 @@
 # Runtime-leakage example (leaky → clean) — the moat
 
 The headline demo. Same data, same cutoff; only the feature function differs.
-[`features.py`](features.py) defines both; run from this directory (or the repo
-root) so `features` imports.
+[`features.py`](features.py) defines both. Run the commands below from the repo
+root; the CLI adds the spec directory so `features` imports.
 
 ## clean — passes
 

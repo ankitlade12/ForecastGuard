@@ -35,7 +35,7 @@ class ForecastPerturbationCheck:
         except (ValueError, TypeError, KeyError):
             return self._skip("can't parse timestamps/window configuration")
 
-        component: Component = "pipeline" if spec.pipeline_factory else "forecast"
+        component: Component = "pipeline" if ctx.uses_pipeline else "forecast"
         results = []
         for index, (cutoff, expected) in enumerate(windows.origins):
             result = self._run_window(ctx, windows.timestamps, cutoff, expected, index)
@@ -129,7 +129,7 @@ class ForecastPerturbationCheck:
             changed = _changed_predictions(aligned_a, aligned)
             mark_probe(
                 ctx,
-                "pipeline" if spec.pipeline_factory else "forecast",
+                "pipeline" if ctx.uses_pipeline else "forecast",
                 cutoff,
                 mode,
                 failed=bool(changed),

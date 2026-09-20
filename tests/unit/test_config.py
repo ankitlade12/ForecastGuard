@@ -11,6 +11,13 @@ from forecastguard.config import load_spec
 pytestmark = pytest.mark.unit
 
 
+def test_yaml_still_requires_data(tmp_path: Path) -> None:
+    path = tmp_path / "forecastguard.yaml"
+    path.write_text("cutoff: '2024-01-01'\nhorizon: 1\nfreq: D\n")
+    with pytest.raises(ValueError, match="YAML specs require data"):
+        load_spec(path)
+
+
 def test_load_spec_resolves_relative_data_path(tmp_path: Path) -> None:
     (tmp_path / "data.csv").write_text("unique_id,ds,y\nA,2024-01-01,1\n", encoding="utf-8")
     (tmp_path / "forecastguard.yaml").write_text(
@@ -19,7 +26,7 @@ def test_load_spec_resolves_relative_data_path(tmp_path: Path) -> None:
     )
     spec = load_spec(tmp_path / "forecastguard.yaml")
     assert spec.name == "t"
-    assert spec.data.is_absolute()
+    assert spec.data is not None and spec.data.is_absolute()
     assert spec.data == (tmp_path / "data.csv").resolve()
 
 

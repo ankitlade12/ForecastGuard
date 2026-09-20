@@ -4,17 +4,16 @@ import pandas as pd
 
 from forecastguard.checks.protocol import CheckContext
 from forecastguard.models.execution import Component, ProbeCoverage
-from forecastguard.models.spec import ForecastSpec
 
 
-def components(spec: ForecastSpec) -> list[Component]:
+def components(ctx: CheckContext) -> list[Component]:
     """List declared boundaries without importing user code."""
-    if spec.pipeline_factory:
+    if ctx.uses_pipeline:
         return ["pipeline"]
     result: list[Component] = []
-    if spec.feature_fn:
+    if ctx.spec.feature_fn or ctx.feature_fn is not None:
         result.append("feature")
-    if spec.forecast_fn:
+    if ctx.spec.forecast_fn or ctx.forecast_fn is not None:
         result.append("forecast")
     return result
 
@@ -23,12 +22,7 @@ def initialize_coverage(ctx: CheckContext) -> None:
     """Record every configured probe before attempting execution."""
     if ctx.coverage:
         return
-    selected = components(ctx.spec)
-    if not selected:
-        if ctx.feature_fn:
-            selected.append("feature")
-        if ctx.forecast_fn:
-            selected.append("forecast")
+    selected = components(ctx)
     try:
         origins = [cutoff.isoformat() for cutoff, _ in ctx.windows.origins]
     except (ValueError, TypeError, KeyError):
@@ -93,6 +87,6 @@ def invoke_forecast(
     """Count a forecast or full-pipeline execution even when it raises."""
     assert ctx.forecast_fn is not None
     ctx.runtime_calls += 1
-    if ctx.spec.pipeline_factory:
+    if ctx.uses_pipeline:
         return ctx.forecast_fn(train, future, cutoff=cutoff)
     return ctx.forecast_fn(train, future)

@@ -40,10 +40,18 @@ jobs:
         run: uv build
 
       - name: Real MLForecast integration and generated onboarding
-        run: uv run --extra dev --extra nixtla --python ${{ matrix.python-version }} pytest tests/integration/test_mlforecast_real.py tests/integration/test_adoption_workflow.py
+        run: |
+          uv run --extra dev --extra nixtla --python ${{ matrix.python-version }} pytest tests/integration/test_mlforecast_real.py tests/integration/test_adoption_workflow.py
+          uv run --extra dev --extra nixtla --python ${{ matrix.python-version }} python examples/python_api/mlforecast_example.py
 
       - name: Verify wheel and sdist metadata
         run: uvx twine check dist/*
+
+      - name: Test installed Python library
+        run: |
+          uv venv "$RUNNER_TEMP/forecastguard-wheel" --python ${{ matrix.python-version }}
+          uv pip install --python "$RUNNER_TEMP/forecastguard-wheel/bin/python" dist/*.whl
+          "$RUNNER_TEMP/forecastguard-wheel/bin/python" -I examples/python_api/pandas_example.py
 
       - name: Action-equivalent CLI smoke
         run: |
