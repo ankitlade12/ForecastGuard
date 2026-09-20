@@ -28,7 +28,8 @@ privately using [SECURITY.md](SECURITY.md). Remove private data from reproductio
 - Conventional commits (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`,
   `chore:`). One logical change per commit.
 - `main` requires a PR, one approving review, up-to-date passing CI, and resolved
-  conversations, including for admins. New commits dismiss prior approvals.
+  conversations for non-admin contributors. Administrators can bypass these
+  requirements. New commits dismiss prior approvals.
   Force pushes and deletion are blocked. See [branch protection](docs/CI.md#main-branch-protection).
 
 ## Local development setup
@@ -53,6 +54,18 @@ Once dependencies are installed, `uv run --no-sync` preserves that environment.
 Core tests may skip optional integrations when their dependencies are absent.
 
 ## Documentation changes
+
+Build the [documentation site](https://ankitlade12.github.io/ForecastGuard/) with
+`make docs` (Sphinx, MyST and Furo are optional `docs` dependencies). Open
+`docs/_build/html/index.html` locally, or serve that directory with
+`python -m http.server --directory docs/_build/html 8000` to test search.
+Build warnings fail CI and block the required `conclude` check. Successful
+`main` builds deploy to GitHub Pages after all required checks pass.
+
+Edit the existing Markdown guides in `docs/`; the site uses those same files.
+`docs/api.rst` pulls signatures/docstrings from public Python objects, and
+`docs/examples.md` includes the runnable example directly. Add new pages to the
+navigation in `docs/index.md`. Historical plans remain on GitHub.
 
 Start with the [documentation index](docs/README.md). Keep the README focused on
 the first successful run; put configuration detail in the reference guides.

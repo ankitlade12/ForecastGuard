@@ -1,14 +1,14 @@
 # Release runbook
 
 This is a maintainer procedure. Completing documentation or local tests does not
-publish a release. The current public status is stated in the [README](../README.md).
+publish a release. The current public status is stated in the [README](https://github.com/ankitlade12/ForecastGuard/blob/main/README.md).
 
 ## Prepare a reviewable release
 
-1. Review the intended source revision, [changelog](../CHANGELOG.md),
-   [support matrix](../SUPPORT_MATRIX.md), examples and installation instructions.
+1. Review the intended source revision, [changelog](https://github.com/ankitlade12/ForecastGuard/blob/main/CHANGELOG.md),
+   [support matrix](https://github.com/ankitlade12/ForecastGuard/blob/main/SUPPORT_MATRIX.md), examples and installation instructions.
 2. Run the core checks and optional MLForecast integration in the
-   [CI matrix](../.github/workflows/ci.yml). Confirm wheel/sdist metadata checks pass.
+   [CI matrix](https://github.com/ankitlade12/ForecastGuard/blob/main/.github/workflows/ci.yml). Confirm wheel/sdist metadata checks pass.
 3. Install the built wheel in a fresh environment and run both the bundled clean
    example and the intentional failure example from a source checkout. Confirm
    exit codes and JSON/SARIF output, including coverage fields.
@@ -26,7 +26,7 @@ requirements; see [the branch policy](CI.md#main-branch-protection).
 
 ## Publishing setup
 
-The [publish workflow](../.github/workflows/publish.yml) runs when a GitHub release
+The [publish workflow](https://github.com/ankitlade12/ForecastGuard/blob/main/.github/workflows/publish.yml) runs when a GitHub release
 is published. It uses PyPI trusted publishing with the `pypi` GitHub environment.
 Configure the matching PyPI project publisher and repository environment before
 triggering it. The workflow verifies the release tag against the package version.

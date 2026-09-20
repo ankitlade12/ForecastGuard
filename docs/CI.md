@@ -49,7 +49,7 @@ checks ran; inspect the failed step's log.
 
 ## Composite Action
 
-[The bundled Action](../action.yml) installs ForecastGuard, runs the gate and
+[The bundled Action](https://github.com/ankitlade12/ForecastGuard/blob/main/action.yml) installs ForecastGuard, runs the gate and
 uploads JSON/SARIF artifacts. In this repository it can be invoked with `uses: ./`
 after checkout. In another repository, use a reviewed, published source commit
 of `ankitlade12/ForecastGuard`; no `v0` tag is assumed by this guide.
@@ -77,7 +77,7 @@ validate the entire backtest. Optional adapter setup is outside the probe budget
 Reports contain evidence values and may include private data. Choose artifact
 access and retention to suit the dataset. Treat pipeline code from pull requests
 as executable code, and avoid exposing privileged credentials to untrusted code.
-See [the execution policy](../SECURITY.md).
+See [the execution policy](https://github.com/ankitlade12/ForecastGuard/blob/main/SECURITY.md).
 
 The Action uploads SARIF as an artifact; it does not submit it to GitHub code
 scanning. That requires a separate upload step and appropriate repository access.
@@ -89,7 +89,7 @@ Configured on GitHub on 2026-09-19:
 - Changes to `main` must go through a pull request with one approving review.
 - New commits dismiss stale approvals.
 - The branch must be up to date, and the `conclude` check from GitHub Actions
-  must pass. It aggregates the Python 3.12/3.13 test matrix.
+  must pass. It aggregates the Python 3.12/3.13 test matrix and the Sphinx build.
 - Review conversations must be resolved.
 - Force pushes and branch deletion are disabled.
 - Repository administrators can bypass these requirements, as configured by

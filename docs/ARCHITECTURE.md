@@ -8,11 +8,11 @@ One-page entry point for anyone (human or AI) working in this repo.
 |---|---|
 | **Product intent, the 3 checks, scope, GTM** | [`ForecastGuard_PRD.md`](./ForecastGuard_PRD.md) — the canonical product spec |
 | **Engineering decisions, rationale, tradeoffs** | [`DECISIONS.md`](./DECISIONS.md) — living decision log, dated entries |
-| **What's planned / in flight** | [Roadmap](../ROADMAP.md); [dated plan archive](plans/README.md) |
-| **The input contract** | [`forecastguard/models/spec.py`](../forecastguard/models/spec.py) |
-| **The output contract** | [`forecastguard/models/report.py`](../forecastguard/models/report.py) |
+| **What's planned / in flight** | [Roadmap](https://github.com/ankitlade12/ForecastGuard/blob/main/ROADMAP.md); [dated plan archive](https://github.com/ankitlade12/ForecastGuard/blob/main/docs/plans/README.md) |
+| **The input contract** | [`forecastguard/models/spec.py`](https://github.com/ankitlade12/ForecastGuard/blob/main/forecastguard/models/spec.py) |
+| **The output contract** | [`forecastguard/models/report.py`](https://github.com/ankitlade12/ForecastGuard/blob/main/forecastguard/models/report.py) |
 | **How to set up and use the library** | [User documentation](README.md) |
-| **How to test and contribute** | [Contributing](../CONTRIBUTING.md) + `Makefile` |
+| **How to test and contribute** | [Contributing](https://github.com/ankitlade12/ForecastGuard/blob/main/CONTRIBUTING.md) + `Makefile` |
 
 The PRD describes the product as intended. DECISIONS.md captures engineering
 judgment that fills gaps or evolves beyond the PRD.

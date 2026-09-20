@@ -75,7 +75,7 @@ passing silently. Materialized CV output cannot recreate raw pre-origin history.
 
 A run is driven by a typed `ForecastSpec`, created in Python or loaded from
 `forecastguard.yaml` — see
-[`forecastguard/models/spec.py`](../forecastguard/models/spec.py) for the
+[`forecastguard/models/spec.py`](https://github.com/ankitlade12/ForecastGuard/blob/main/forecastguard/models/spec.py) for the
 authoritative schema. It declares:
 
 - `data` — the long-format dataset path (one row per series × timestamp);

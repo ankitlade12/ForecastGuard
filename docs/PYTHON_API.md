@@ -127,9 +127,9 @@ python examples/python_api/pandas_example.py
 python examples/python_api/mlforecast_example.py  # requires the nixtla extra
 ```
 
-The [pandas example](../examples/python_api/pandas_example.py) checks clean/leaky
+The [pandas example](https://github.com/ankitlade12/ForecastGuard/blob/main/examples/python_api/pandas_example.py) checks clean/leaky
 features, report round-tripping, and SARIF. The
-[MLForecast example](../examples/python_api/mlforecast_example.py) fits a real
+[MLForecast example](https://github.com/ankitlade12/ForecastGuard/blob/main/examples/python_api/mlforecast_example.py) fits a real
 model inside a direct forecast function across two origins with three modes,
 then verifies an intentionally leaky forecast fails. Both use synthetic data in
 memory and assert expected outcomes; they exit zero when those assertions pass.

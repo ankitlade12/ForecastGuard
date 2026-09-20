@@ -82,14 +82,25 @@ class ForecastSpec(BaseModel):
         future_covariates: Columns the user *declares* will be known at predict
             time in production (calendar features, planned promotions, ...).
             The known-future check validates that availability declaration
-            against the holdout data. Model-consumption inspection requires a
-            future framework adapter.
+            against the holdout data. Model-consumption inspection uses the
+            optional fitted-MLForecast adapter.
         static_covariates: Per-series, time-invariant columns.
         feature_fn: Dotted reference (``"package.module:callable"``) to the
-            feature-engineering function. Required for the runtime-leakage
-            check; when absent that check *skips loudly* rather than passing
-            silently.
+            feature-engineering function. Runtime checks need a feature function,
+            forecast function, or replay factory; without one they skip loudly.
+        forecast_fn: Import reference to a function returning forecast predictions
+            from training and future frames.
+        availability: Publication timestamp contracts for future covariates.
+        perturbations: Future-input interventions to test at each origin.
+        perturbation_seed: Seed for deterministic noise interventions.
+        max_probe_calls: Optional primary runtime call budget; not a timeout.
         adapter: Optional fitted-MLForecast introspection configuration.
+        pipeline_factory: Import reference to a factory producing fresh replay
+            objects. Mutually exclusive with feature and forecast functions.
+        diagnostics: Run bounded single-input probes after an established leak.
+        max_diagnostic_calls: Separate call cap for diagnostic probes.
+        revisions: Sidecar histories enforcing the declared latest-available
+            snapshot at each origin.
     """
 
     model_config = ConfigDict(extra="forbid")

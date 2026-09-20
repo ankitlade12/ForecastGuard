@@ -28,6 +28,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+docs = [
+    "sphinx>=8.2,<9",
+    "myst-parser>=4,<5",
+    "furo>=2024.8.6",
+]
 dev = [
     "pytest>=8.0.0",
     "pytest-cov>=5.0.0",
@@ -45,7 +50,7 @@ forecastguard = "forecastguard.cli:app"
 [project.urls]
 Homepage = "https://github.com/ankitlade12/ForecastGuard"
 Repository = "https://github.com/ankitlade12/ForecastGuard"
-Documentation = "https://github.com/ankitlade12/ForecastGuard/blob/main/docs/README.md"
+Documentation = "https://ankitlade12.github.io/ForecastGuard/"
 Issues = "https://github.com/ankitlade12/ForecastGuard/issues"
 Changelog = "https://github.com/ankitlade12/ForecastGuard/blob/main/CHANGELOG.md"
 

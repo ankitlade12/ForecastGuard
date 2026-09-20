@@ -2,7 +2,7 @@
 
 ForecastGuard accepts both the raw history used to create rolling windows and
 MLForecast's materialized `cross_validation` output. The runnable fixtures are
-in [`examples/nixtla_rolling`](../../examples/nixtla_rolling/).
+in [`examples/nixtla_rolling`](https://github.com/ankitlade12/ForecastGuard/tree/main/examples/nixtla_rolling).
 
 ## 1. Validate raw history across multiple origins
 

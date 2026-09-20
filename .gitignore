@@ -17,6 +17,7 @@ uv.lock
 .uv-cache/
 
 # Tooling caches
+docs/_build/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
