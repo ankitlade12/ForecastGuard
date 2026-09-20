@@ -112,5 +112,5 @@ GitHub annotations, and the step summary all render the same typed report.
 | **5** | Action hardening, README asset, Nixtla tutorial, release automation ✅ locally |
 | **P1–P3** | Rolling/Nixtla, MLForecast adapter, forecast perturbation, availability, evidence/benchmarks ✅ |
 | **Adoption + Python API** | Setup, coverage, diagnostics, replay, revisions, and direct DataFrame/callable inputs ✅ |
-| **Release** | Review/merge, publishing setup, first GitHub/PyPI release |
+| **Release** | `0.1.0` published on GitHub/PyPI; fresh registry installation verified ✅ |
 | **Later** | Hosted CI tier, additional framework adapters |

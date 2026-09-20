@@ -3,6 +3,7 @@
 **Check your forecasting pipeline before you trust its backtest.**
 
 [![CI](https://github.com/ankitlade12/ForecastGuard/actions/workflows/ci.yml/badge.svg)](https://github.com/ankitlade12/ForecastGuard/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/forecastguard)](https://pypi.org/project/forecastguard/)
 [![Python](https://img.shields.io/badge/Python-3.12%20%7C%203.13-blue)](https://github.com/ankitlade12/ForecastGuard/blob/main/SUPPORT_MATRIX.md)
 [![License](https://img.shields.io/badge/License-Apache--2.0-green)](https://github.com/ankitlade12/ForecastGuard/blob/main/LICENSE)
 
@@ -21,21 +22,20 @@ Runs stay in your environment; no account or hosted service is needed.
 
 ## Install
 
-From the repository checkout, with Python 3.12 or 3.13:
+With Python 3.12 or 3.13:
 
 ```bash
-python -m pip install .
+python -m pip install forecastguard
 ```
 
 Optional integrations:
 
 ```bash
-python -m pip install '.[nixtla]'   # MLForecast
-python -m pip install '.[parquet]'  # Parquet datasets
+python -m pip install 'forecastguard[nixtla]'   # MLForecast
+python -m pip install 'forecastguard[parquet]'  # Parquet datasets
 ```
 
-The first PyPI upload is pending. Registry installation instructions will replace
-these source-install commands after the release is verified.
+For a reproducible install of the initial release, use `forecastguard==0.1.0`.
 
 ## Try a working example
 

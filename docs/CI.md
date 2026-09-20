@@ -92,7 +92,8 @@ Configured on GitHub on 2026-09-19:
   must pass. It aggregates the Python 3.12/3.13 test matrix.
 - Review conversations must be resolved.
 - Force pushes and branch deletion are disabled.
-- These requirements also apply to repository administrators.
+- Repository administrators can bypass these requirements, as configured by
+  the maintainer. Other contributors still require one approval and passing CI.
 
 The PR author cannot supply their own required approval. Code-owner review is
 not separately mandatory; a collaborator with write access can approve.

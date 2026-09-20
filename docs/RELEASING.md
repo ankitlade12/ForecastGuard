@@ -21,7 +21,8 @@ publish a release. The current public status is stated in the [README](../README
 
 Merge release changes through the protected `main` branch. An independent
 approval, up-to-date passing `conclude` CI, and resolved conversations are
-required; see [the branch policy](CI.md#main-branch-protection).
+required for non-admin contributors. Repository administrators can bypass these
+requirements; see [the branch policy](CI.md#main-branch-protection).
 
 ## Publishing setup
 

@@ -6,19 +6,20 @@ pointer, not a second backlog or a live credentials report.
 
 ## Latest verified implementation
 
-The Python library API is in [PR #4](https://github.com/ankitlade12/ForecastGuard/pull/4),
-commit `ff37153`. Verification on 2026-09-19: 195 local tests passed, including
-real MLForecast integration; lint, formatting and strict typing passed. Wheel
-and sdist metadata, a fresh wheel installation, clean/leaky Python and CLI
-examples, and JSON/SARIF reports were verified. GitHub's Python 3.12/3.13 matrix
-passed for that revision. Consult the PR checks for newer revisions.
+Version [0.1.0](https://github.com/ankitlade12/ForecastGuard/releases/tag/v0.1.0)
+is published on [PyPI](https://pypi.org/project/forecastguard/0.1.0/) from commit
+`c4245e1`. The release workflow passed 195 tests, distribution metadata checks,
+and a fresh wheel smoke test. A fresh PyPI installation passed clean/leaky Python
+examples, JSON/SARIF checks and CLI version verification. Python 3.12/3.13 CI
+passed before release. The Python API and README changes are merged.
 
 The repository is public. `main` requires an approved PR, up-to-date passing
 `conclude` CI, resolved conversations, and disallows force pushes/deletions,
-including for admins. See [the branch policy](docs/CI.md#main-branch-protection).
+with an administrator bypass enabled by the maintainer.
+See [the branch policy](docs/CI.md#main-branch-protection).
 
 ## Next work
 
-Complete review and merge, then verify publisher configuration and prepare the
-first release. GitHub authentication was working during this audit; PyPI setup
-has not been verified. No release has been published by this workflow.
+Add `saijasti` as a PyPI maintainer through the project collaborator settings.
+Exercise the released Action in an independent consumer repository and refresh
+the feasibility measurements against the release revision; see the roadmap.
