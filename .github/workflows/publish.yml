@@ -4,24 +4,54 @@ on:
   release:
     types: [published]
 
+permissions:
+  contents: read
+
 jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require a release commit from main
+        run: git merge-base --is-ancestor HEAD origin/main
       - uses: astral-sh/setup-uv@v4
       - run: uv python install 3.12
-      - run: uv sync --extra dev --python 3.12
-      - run: uv run pytest
+      - run: uv sync --extra dev --extra nixtla --python 3.12
+      - run: uv run --no-sync pytest
       - name: Verify release tag matches package version
         env:
           RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
-          package_version="$(uv run python -c 'from forecastguard import __version__; print(__version__)')"
-          test "$RELEASE_TAG" = "v$package_version"
+          uv run --no-sync python - <<'PY'
+          import os
+          import tomllib
+          from pathlib import Path
+          from forecastguard import __version__
+
+          version = tomllib.loads(Path("pyproject.toml").read_text())["project"]["version"]
+          assert version == __version__, "source package versions disagree"
+          assert os.environ["RELEASE_TAG"] == f"v{version}", "release tag does not match version"
+          PY
+      - name: Build and check distributions
+        run: |
+          uv build
+          uvx twine check dist/*
+      - name: Smoke-test the built wheel
+        run: |
+          uv venv "$RUNNER_TEMP/forecastguard-release" --python 3.12
+          uv pip install --python "$RUNNER_TEMP/forecastguard-release/bin/python" dist/*.whl
+          "$RUNNER_TEMP/forecastguard-release/bin/python" -I examples/python_api/pandas_example.py
+      - name: Save verified distributions
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-distributions
+          path: dist/*
+          if-no-files-found: error
 
   pypi-publish:
-    name: Build and publish the distribution to PyPI
+    name: Publish verified distributions to PyPI
     runs-on: ubuntu-latest
     environment:
       name: pypi
@@ -32,15 +62,11 @@ jobs:
     needs: verify
 
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: astral-sh/setup-uv@v4
-
-      - name: Build a wheel and sdist
-        run: uv build
-
-      - name: Check distribution metadata
-        run: uvx twine check dist/*
+      - name: Retrieve verified distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: release-distributions
+          path: dist/
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1

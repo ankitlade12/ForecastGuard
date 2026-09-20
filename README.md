@@ -1,46 +1,54 @@
 # ForecastGuard
 
-**Catch forecasting pipeline errors before you trust a backtest.**
+**Check your forecasting pipeline before you trust its backtest.**
 
 [![CI](https://github.com/ankitlade12/ForecastGuard/actions/workflows/ci.yml/badge.svg)](https://github.com/ankitlade12/ForecastGuard/actions/workflows/ci.yml)
-[![Python](https://img.shields.io/badge/Python-3.12%20%7C%203.13-blue)](SUPPORT_MATRIX.md)
-[![License](https://img.shields.io/badge/License-Apache--2.0-green)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.12%20%7C%203.13-blue)](https://github.com/ankitlade12/ForecastGuard/blob/main/SUPPORT_MATRIX.md)
+[![License](https://img.shields.io/badge/License-Apache--2.0-green)](https://github.com/ankitlade12/ForecastGuard/blob/main/LICENSE)
 
-[Documentation](docs/README.md) · [Examples](examples/README.md) ·
-[Support matrix](SUPPORT_MATRIX.md) · [Benchmarks](docs/BENCHMARK_FEASIBILITY.md) ·
-[Contributing](CONTRIBUTING.md)
+[Python API](https://github.com/ankitlade12/ForecastGuard/blob/main/docs/PYTHON_API.md) ·
+[Documentation](https://github.com/ankitlade12/ForecastGuard/blob/main/docs/README.md) ·
+[Examples](https://github.com/ankitlade12/ForecastGuard/tree/main/examples) ·
+[Report a bug](https://github.com/ankitlade12/ForecastGuard/issues/new/choose)
 
-ForecastGuard is a Python library, CLI and GitHub Action for validating forecasting
-backtests. It checks train/validation boundaries, covariate availability and whether
-features or predictions change when unavailable future inputs are perturbed.
-Use it with your existing forecasting code before comparing models or accepting
-a pipeline change.
+A backtest can look better because a feature or prediction used information that
+wasn't available at the forecast origin. ForecastGuard reruns your code with
+unavailable future inputs changed and reports when the output moves.
 
-It runs locally with pandas dataframes, supports configurable column names, and
-includes an optional MLForecast integration. No account or hosted service is required.
+Use it as a **Python library**, a **CLI**, or a **GitHub Action**. It works with
+pandas DataFrames and your existing functions, including MLForecast pipelines.
+Runs stay in your environment; no account or hosted service is needed.
 
-> **Status: pre-release.** The features below are implemented in this checkout.
-> Install from source while release review is in progress; these instructions do
-> not depend on a PyPI release. Runtime results cover the configured pipeline,
-> origins and probes. A PASS does not prove the absence of every kind of leakage.
+> **Pre-release:** `0.1.0` is being prepared for PyPI. Use a source checkout
+> containing the Python API ([PR #4](https://github.com/ankitlade12/ForecastGuard/pull/4)
+> until merged). A successful check covers the configured probes; it does not
+> certify that a pipeline is free of every kind of leakage.
 
-![A forecasting cutoff separating training data from future observations](docs/assets/forecastguard-demo.gif)
+## Install
 
-## Try a working example
-
-With Python 3.12 or 3.13, clone the repository and install the library:
+From the repository checkout, with Python 3.12 or 3.13:
 
 ```bash
-git clone https://github.com/ankitlade12/ForecastGuard.git
-cd ForecastGuard
 python -m pip install .
 ```
 
-Then use the library directly:
+Optional integrations:
+
+```bash
+python -m pip install '.[nixtla]'   # MLForecast
+python -m pip install '.[parquet]'  # Parquet datasets
+```
+
+The first PyPI upload is pending. Registry installation instructions will replace
+these source-install commands after the release is verified.
+
+## Try a working example
+
+Pass a DataFrame and a function. No YAML, import strings, or temporary CSV files.
 
 ```python
 import pandas as pd
-import forecastguard
+from forecastguard import ForecastSpec, run_checks
 
 frame = pd.DataFrame({
     "unique_id": ["A"] * 6,
@@ -53,150 +61,118 @@ def features(data):
         lag=data.groupby("unique_id")["y"].shift(1)
     )
 
-spec = forecastguard.ForecastSpec(cutoff="2024-01-04", horizon=2, freq="D")
-report = forecastguard.run_checks(spec, frame=frame, feature_fn=features)
+spec = ForecastSpec(cutoff="2024-01-04", horizon=2, freq="D")
+report = run_checks(spec, frame=frame, feature_fn=features)
 assert report.exit_code(strict=True) == 0
 ```
 
-Change `shift(1)` to `shift(-1)` to see `FG-LEAK-001` detect a future-target
-dependency. DataFrames and local functions work directly, without YAML or
-temporary files. See the [Python API](docs/PYTHON_API.md) for forecast functions,
-pipeline factories, typed results, and a runnable MLForecast example.
-
-## CLI quickstart
-
-With Python 3.12 or 3.13 and [uv](https://docs.astral.sh/uv/getting-started/installation/)
-installed, run from a checkout containing these features:
-
-```bash
-git clone https://github.com/ankitlade12/ForecastGuard.git
-cd ForecastGuard
-uv sync
-uv run forecastguard run --spec examples/adoption/replay-clean.yaml --strict
-```
-
-The clean pipeline passes all three checks and exits `0`. Now run the paired
-pipeline that uses future targets during preprocessing:
-
-```bash
-uv run forecastguard run --spec examples/adoption/replay-leaky.yaml --strict
-```
-
-This intentionally exits `1` with `FG-FORECAST-001`. Its diagnostics identify
-future target sensitivity. Both examples use bundled data and require no model
-downloads, API keys or optional MLForecast dependency.
-
-Already have a checkout? Start at `uv sync`. To install into an existing Python
-environment instead, use `python -m pip install -e .` from the repository root
-and omit the `uv run` prefix.
-
-## Connect your pipeline
-
-For Python applications, pass your existing function directly:
+Now change `shift(1)` to `shift(-1)`. The feature reads tomorrow's target, the
+runtime check fails with **`FG-LEAK-001`**, and the strict exit code is `1`.
+Inspect the result in Python:
 
 ```python
-report = forecastguard.run_checks(spec, frame=frame, forecast_fn=your_forecast)
+for result in report.results:
+    print(result.check_id, result.status)
+    for violation in result.violations:
+        print(violation.code, violation.evidence)
+
+print(report.model_dump_json(indent=2))
 ```
 
-`your_forecast(train, future)` returns keyed horizon predictions. Install
-`python -m pip install '.[nixtla]'` from the checkout for the optional MLForecast
-dependency. The [in-memory example](examples/python_api/mlforecast_example.py)
-shows fitting and prediction inside the tested function.
+Column names, rolling origins, future covariates, perturbation modes and call
+budgets are configurable. See the
+[Python API guide](https://github.com/ankitlade12/ForecastGuard/blob/main/docs/PYTHON_API.md).
 
-For MLForecast, generate a spec and a wrapper around your own unfitted model factory:
+## Connect your forecast
+
+Use the same function you use in your backtest:
+
+```python
+report = run_checks(spec, frame=frame, forecast_fn=predict)
+```
+
+`predict(train, future)` returns a DataFrame of identity/time keys and numeric
+predictions for the complete horizon. Fit preprocessing and models inside that
+function to include them in the test. For a fresh object on every execution, use
+`pipeline_factory=create_pipeline`.
+
+| Boundary | What is compared |
+|---|---|
+| `feature_fn(frame)` | Feature values before each forecast origin |
+| `forecast_fn(train, future)` | Predictions over each forecast horizon |
+| `pipeline_factory()` | Predictions after reconstructing preprocessing and fitting |
+
+Run the complete examples from the checkout:
 
 ```bash
-uv sync --extra nixtla
-uv run --extra nixtla forecastguard init --data data.csv --framework mlforecast \
-  --model-factory yourpackage.models:create_model
-uv run --extra nixtla forecastguard plan --spec forecastguard.yaml
-uv run --extra nixtla forecastguard run --spec forecastguard.yaml --strict --diagnose
+python examples/python_api/pandas_example.py
+python examples/python_api/mlforecast_example.py  # requires the nixtla extra
 ```
 
-Replace `yourpackage.models:create_model` with your importable factory returning
-a fresh `MLForecast` instance. The prompts collect column mappings, horizon,
-cutoff and explicit future/static covariate roles. Omitting `--model-factory`
-creates a reference model for trying the workflow; its result only validates that
-reference wrapper. See the [setup guide](docs/ADOPTION_GUIDE.md).
+Both verify a clean pipeline passes and an intentional leak fails.
 
-For other Python pipelines, use `--framework python` and connect one of these
-interfaces in your YAML:
+## Three checks, one report
 
-| Interface | Use it to validate |
+| Check | Detects |
 |---|---|
-| `feature_fn: 'module:build_features'` | Feature values before each cutoff |
-| `forecast_fn: 'module:predict'` | Predictions from training and future frames |
-| `pipeline_factory: 'module:create_pipeline'` | Preprocessing and fitting reconstructed inside each execution |
+| **Cutoff integrity** | Duplicate keys, invalid identifiers, and incomplete or misaligned forecast windows |
+| **Known-future covariates** | Invalid declarations, incomplete coverage, late availability, and undeclared raw model inputs when adapter evidence is configured |
+| **Runtime leakage** | Features or predictions that change when unavailable future inputs are perturbed |
 
-The [configuration reference](docs/CONFIGURATION.md) defines each contract.
-Code executed outside the configured interface is outside the behavioural test.
+Optional workflows add historical revision contracts, per-probe coverage,
+execution budgets and targeted diagnostics. Read the
+[adoption guide](https://github.com/ankitlade12/ForecastGuard/blob/main/docs/ADOPTION_GUIDE.md)
+for their contracts and examples.
 
-## What you get
+## CLI and CI
 
-| Capability | What it answers |
-|---|---|
-| Cutoff integrity | Are identifiers, timestamps and single/rolling/CV horizons consistent? |
-| Covariate availability | Are declared future/static inputs valid and available when needed? |
-| Behavioural leakage probes | Do unavailable future inputs influence features or forecasts? |
-| Guided setup | How do I connect my data and model without guessing column roles? |
-| Execution planning and coverage | What will run, how many calls can it make, and what actually ran? |
-| Targeted diagnostics | Which individual input interventions changed the output after a failure? |
-| Fresh pipeline replay | Does rebuilding preprocessing and fitting reveal future dependence? |
-| Historical revisions | Do supplied inputs match the latest version published by each origin? |
-| CI reports | Can I gate a change and inspect JSON, SARIF or a GitHub summary? |
+With the package installed, run from the checkout:
 
-These capabilities share three registered checks and one typed report. See
-[all five adoption workflows](docs/ADOPTION_GUIDE.md) for runnable examples and
-[the support matrix](SUPPORT_MATRIX.md) for tested coverage and limitations.
+```bash
+forecastguard run --spec examples/adoption/replay-clean.yaml --strict
+forecastguard run --spec examples/adoption/replay-leaky.yaml --strict
+```
 
-## Read the result
+The first exits `0`; the second intentionally exits `1`. For your own pipeline,
+use `forecastguard init --data data.csv` to create a spec, then
+`forecastguard plan --spec forecastguard.yaml` to inspect the planned work.
 
-| Check status | Meaning | Exit under `--strict` |
+| Status | Meaning | Strict gate |
 |---|---|---|
-| `PASS` | The configured check completed without a detected violation | `0` if every check passes |
-| `FAIL` | A contract violation or future-input dependency was detected | `1` |
-| `SKIPPED` | A required input or executable comparison was unavailable | `1` |
-| `ERROR` | A check raised unexpectedly | `1` |
+| `PASS` | No violation observed in the completed checks | Allows the run if every check passes |
+| `FAIL` | A contract violation or future dependence was detected | Blocks |
+| `SKIPPED` | A required comparison could not complete | Blocks |
+| `ERROR` | An unexpected error prevented a check | Blocks |
 
-Without `--strict`, skips are visible but do not alone make the exit code nonzero.
-Use strict mode when a backtest must have runtime coverage. A materialized CV
-output supports structural validation but cannot supply raw training history
-for behavioural probes.
+Use `report.exit_code(strict=True)` in Python or `--strict` in CI. Without strict
+mode, skips alone do not block. JSON, SARIF and GitHub summaries share the same
+report. See the [CI guide](https://github.com/ankitlade12/ForecastGuard/blob/main/docs/CI.md)
+for the composite Action and artifact setup.
 
-```bash
-uv run forecastguard run --spec examples/adoption/replay-clean.yaml --strict \
-  --json-output forecastguard-report.json --sarif-output forecastguard-report.sarif
-```
+## What a PASS does—and doesn't—mean
 
-See [CLI and report reference](docs/CLI.md), [troubleshooting](docs/TROUBLESHOOTING.md)
-and [CI integration](docs/CI.md). Plans do not execute user code; runtime checks do.
+The probes cover only the configured data, origins, functions, modes and numeric
+tolerance. Frozen preprocessing, external caches, inaccurate availability
+claims, and untested origins can hide leaks. A materialized CV output can be
+checked structurally but lacks the raw history needed for runtime probes.
 
-## Evidence and limits
+The [dated feasibility study](https://github.com/ankitlade12/ForecastGuard/blob/main/docs/BENCHMARK_FEASIBILITY.md)
+caught 72/72 observable seeded leaks with three modes and accepted 72/72 clean
+controls. It missed all 27 constructed boundary leaks. These are curated cases,
+not production recall estimates, and the measurements predate the newer APIs.
 
-In the [recorded local feasibility benchmark](docs/BENCHMARK_FEASIBILITY.md), three
-perturbation modes detected 72/72 observable seeded leaks and accepted 72/72 clean
-controls. The same evaluation missed all 27 deliberately constructed boundary
-leaks. These are curated cases, not an estimate of accuracy on arbitrary pipelines.
+Probes repeat your model work. The study measured total backtest-plus-gate costs
+of 4.78–7.41× baseline. Use explicit call budgets for expensive fitting; call
+budgets are not timeouts. See the
+[support matrix](https://github.com/ankitlade12/ForecastGuard/blob/main/SUPPORT_MATRIX.md)
+and [execution policy](https://github.com/ankitlade12/ForecastGuard/blob/main/SECURITY.md).
 
-Runtime probing repeats your computation. The recorded backtest-plus-gate cost
-was 4.78–7.41 times the baseline across measured workloads. Use `plan` and an
-explicit call budget before applying it to expensive fitting jobs. Diagnostics
-and the new replay/revision workflows are not covered by those earlier timings.
+## Help and contribute
 
-Frozen preprocessing, external state, incorrect availability declarations,
-untested origins and changes below numeric tolerance can escape detection.
-Revision histories enforce a declared snapshot policy; they are supplied evidence,
-not independent provenance. See the [security and execution policy](SECURITY.md).
+[Support](https://github.com/ankitlade12/ForecastGuard/blob/main/SUPPORT.md) ·
+[Contributing](https://github.com/ankitlade12/ForecastGuard/blob/main/CONTRIBUTING.md) ·
+[Roadmap](https://github.com/ankitlade12/ForecastGuard/blob/main/ROADMAP.md) ·
+[Changelog](https://github.com/ankitlade12/ForecastGuard/blob/main/CHANGELOG.md)
 
-## Get help or contribute
-
-Start with [support](SUPPORT.md) for setup questions and reproducible bug reports.
-Small anonymized pipelines that expose a missed leak, a false alarm or an
-unexpected skip are especially useful. Contributions to docs and examples are welcome.
-
-- [Contributor setup and checks](CONTRIBUTING.md)
-- [Roadmap](ROADMAP.md) and [changelog](CHANGELOG.md)
-- [Architecture](docs/ARCHITECTURE.md) and [engineering decisions](docs/DECISIONS.md)
-- [Code of conduct](CODE_OF_CONDUCT.md) and [security reporting](SECURITY.md)
-
-Licensed under the [Apache License 2.0](LICENSE).
+Small reproducible pipelines that reveal missed leaks, false alarms or unexpected
+skips are especially useful. Licensed under Apache-2.0.

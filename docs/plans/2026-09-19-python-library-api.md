@@ -33,3 +33,12 @@ Implementation sequence:
    install outside the source tree with clean/leaky cases and serialized reports.
 
 Publishing is separate release work; this change prepares the installable library.
+
+## Release preparation follow-up — 2026-09-19
+
+Refresh the README for Python library users and PyPI rendering. Require release
+tags to reference a commit on `main`; validate both source version declarations.
+Build once, smoke-test the wheel, and transfer the verified distributions to the
+trusted-publishing job. Validate commands locally and run CI; prepare draft
+release notes without publishing. PyPI account setup and independent PR approval
+remain external prerequisites.

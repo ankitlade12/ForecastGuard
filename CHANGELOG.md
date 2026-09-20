@@ -6,6 +6,15 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### PyPI release preparation
+- Refresh the README around Python usage, runnable leak detection and concise
+  integration guidance; use absolute documentation links for the PyPI page.
+- The publish workflow requires a commit on `main` and matching tag/source
+  versions, runs real optional integration tests, and uploads the same wheel
+  and sdist that passed metadata and clean-install validation.
+- Document the exact pending-publisher configuration; retain pre-release status
+  until the first upload and registry install are verified.
+
 ### Python library API
 - Public `forecastguard.run_checks` accepts an in-memory DataFrame and direct
   feature/forecast callables or a fresh pipeline factory; `ReplayPipeline` is
