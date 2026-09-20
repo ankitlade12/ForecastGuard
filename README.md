@@ -19,11 +19,6 @@ Use it as a **Python library**, a **CLI**, or a **GitHub Action**. It works with
 pandas DataFrames and your existing functions, including MLForecast pipelines.
 Runs stay in your environment; no account or hosted service is needed.
 
-> **Pre-release:** `0.1.0` is being prepared for PyPI. Use a source checkout
-> containing the Python API ([PR #4](https://github.com/ankitlade12/ForecastGuard/pull/4)
-> until merged). A successful check covers the configured probes; it does not
-> certify that a pipeline is free of every kind of leakage.
-
 ## Install
 
 From the repository checkout, with Python 3.12 or 3.13:
