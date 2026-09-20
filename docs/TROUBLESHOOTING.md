@@ -1,6 +1,6 @@
 # Troubleshooting
 
-[Documentation home](README.md) · [Support](../SUPPORT.md)
+[Documentation home](README.md) · [Support](https://github.com/ankitlade12/ForecastGuard/blob/main/SUPPORT.md)
 
 Start by running the bundled clean replay example. If it passes, compare your
 spec and callable against the [configuration contracts](CONFIGURATION.md).
@@ -44,5 +44,5 @@ There is no automatic estimate of the backtest score inflation.
 
 Reduce the data to a few series and relevant cutoffs while keeping the unexpected
 behaviour. Include the spec, callable and exact command. Review JSON evidence for
-private sample values before attaching it. See [support](../SUPPORT.md) for the
+private sample values before attaching it. See [support](https://github.com/ankitlade12/ForecastGuard/blob/main/SUPPORT.md) for the
 reporting channel and environment details to include.

@@ -12,7 +12,7 @@ behavior, rather than reading an early entry as the current feature list.
 
 ---
 
-### D-001 — Nixtla-native data contract
+## D-001 — Nixtla-native data contract
 **2026-06-14 · Accepted**
 
 The canonical data shape is long-format `unique_id` / `ds` / `y`, matching the
@@ -25,7 +25,7 @@ adoption friction and makes the `cross_validation` tutorial PR natural.
 
 ---
 
-### D-002 — Three deliberately narrow checks; honest scope
+## D-002 — Three deliberately narrow checks; honest scope
 **2026-06-14 · Accepted**
 
 Ship exactly three checks — cutoff integrity, known-future covariates, runtime
@@ -37,7 +37,7 @@ leakage." We advertise this honestly.
 
 ---
 
-### D-003 — Behavioural perturbation for leakage, not source parsing
+## D-003 — Behavioural perturbation for leakage, not source parsing
 **2026-06-14 · Accepted**
 
 The runtime-leakage check (the moat) re-runs the user's feature function on
@@ -52,7 +52,7 @@ aid (see D-008), never the detector.
 
 ---
 
-### D-004 — Check protocol + stub pattern
+## D-004 — Check protocol + stub pattern
 **2026-06-14 · Accepted**
 
 Every check implements the `Check` protocol and depends only on `CheckContext`
@@ -65,7 +65,7 @@ keeps slices independently shippable and the surface area stable.
 
 ---
 
-### D-005 — Structured outputs everywhere
+## D-005 — Structured outputs everywhere
 **2026-06-14 · Accepted**
 
 Checks return typed `CheckResult` payloads (`pass` / `fail` / `skipped` /
@@ -77,7 +77,7 @@ render the same typed contract. Codes enable selective suppression later.
 
 ---
 
-### D-006 — Skip loudly, never pass silently
+## D-006 — Skip loudly, never pass silently
 **2026-06-14 · Accepted**
 
 When a check's precondition is missing — most importantly, the runtime check
@@ -89,7 +89,7 @@ it manufactures false confidence. Honesty is the differentiator.
 
 ---
 
-### D-007 — The exit code is the gate
+## D-007 — The exit code is the gate
 **2026-06-14 · Accepted**
 
 `Report.exit_code()` returns `1` on any `fail`/`error`; `0` otherwise. `--strict`
@@ -101,7 +101,7 @@ runtime check actually ran.
 
 ---
 
-### D-008 — OSS CLI first; adapters and AST hints later
+## D-008 — OSS CLI first; adapters and AST hints later
 **2026-06-14 · Accepted**
 
 Ship an OSS CLI + GitHub Action first. Defer: hosted CI tier,
@@ -114,7 +114,7 @@ SaaS tier rides on an already-trusted gate.
 
 ---
 
-### D-009 — Click CLI, pandas core, minimal deps
+## D-009 — Click CLI, pandas core, minimal deps
 **2026-06-14 · Accepted**
 
 Runtime deps: `pydantic` (contract), `click` (CLI), `pandas` (dataframe
@@ -126,7 +126,7 @@ the dependency surface ubiquitous and battle-tested.
 
 ---
 
-### D-010 — Distribution as CLI + composite GitHub Action
+## D-010 — Distribution as CLI + composite GitHub Action
 **2026-06-14 · Accepted**
 
 The GitHub Action (`action.yml`) is a thin composite wrapper that installs the
@@ -137,7 +137,7 @@ exit-code guarantee the CLI has.
 
 ---
 
-### D-011 — Cutoff-integrity semantics (single-cutoff holdout)
+## D-011 — Cutoff-integrity semantics (single-cutoff holdout)
 **2026-06-14 · Accepted**
 
 The cutoff check (Slice 2) treats `spec.cutoff` as a single train/holdout
@@ -168,7 +168,7 @@ real workflow needs them.
 
 ---
 
-### D-012 — Known-future is a contract check, not a behavioural one
+## D-012 — Known-future is a contract check, not a behavioural one
 **2026-06-14 · Accepted**
 
 The known-future check (Slice 3) validates `spec.future_covariates` against the
@@ -194,7 +194,7 @@ Partial holdout coverage was originally out of scope and is now validated by
 
 ---
 
-### D-013 — Runtime leakage via behavioural perturbation
+## D-013 — Runtime leakage via behavioural perturbation
 **2026-06-14 · Accepted**
 
 The runtime check (Slice 4, the moat) proves leakage *behaviourally*, never by
@@ -229,7 +229,7 @@ masking.
 
 ---
 
-### D-014 — Bounded perturbation claims and a stricter availability contract
+## D-014 — Bounded perturbation claims and a stricter availability contract
 **2026-08-30 · Accepted**
 
 Runtime leakage is a one-sided behavioural test. If censoring future-unknown
@@ -261,7 +261,7 @@ contract rather than scraping terminal text.
 
 ---
 
-### D-015 — One explicit validation-window source
+## D-015 — One explicit validation-window source
 **2026-08-30 · Accepted**
 
 `ForecastSpec` requires exactly one of `cutoff`, `cutoffs`, or `cutoff_col`.
@@ -277,7 +277,7 @@ mutually-exclusive shapes avoid guessing.
 
 ---
 
-### D-016 — Fitted MLForecast usage closes the declaration gap
+## D-016 — Fitted MLForecast usage closes the declaration gap
 **2026-08-30 · Accepted**
 
 The optional MLForecast adapter obtains a fitted object from `model_path` or
@@ -292,7 +292,7 @@ to model IO.
 
 ---
 
-### D-017 — Forecast outputs are a second behavioural boundary
+## D-017 — Forecast outputs are a second behavioural boundary
 **2026-08-30 · Accepted**
 
 An optional `forecast_fn(train_df, future_df)` is run twice for determinism and
@@ -304,7 +304,7 @@ registered check, preserving the three-check public architecture.
 
 ---
 
-### D-018 — Availability is point-in-time; AST is explanation only
+## D-018 — Availability is point-in-time; AST is explanation only
 **2026-08-30 · Accepted**
 
 Future covariates can declare an explicit availability timestamp column. A
@@ -320,7 +320,7 @@ evidence. Keeping source parsing non-authoritative preserves D-003.
 
 ---
 
-### D-019 — One Report, multiple CI renderers; pandas remains the backend
+## D-019 — One Report, multiple CI renderers; pandas remains the backend
 **2026-08-30 · Accepted**
 
 Human output, versioned JSON, SARIF 2.1.0, GitHub annotations, and the step
@@ -335,7 +335,7 @@ dataframe backend is complexity without measured need.
 
 ---
 
-### D-020 — Setup and planning never infer availability or execute user code
+## D-020 — Setup and planning never infer availability or execute user code
 **2026-09-12 · Accepted**
 
 `init` suggests structural mappings but requires explicit future/static roles.
@@ -344,7 +344,7 @@ unfitted model factory. `plan` loads data and revision sidecars only; READY is
 static readiness, not a runtime verdict. Coverage is per configured boundary,
 origin and mode, with counts of actual executions and explicit scope notes.
 
-### D-021 — Diagnostics are bounded explanations; replay expands the boundary
+## D-021 — Diagnostics are bounded explanations; replay expands the boundary
 **2026-09-12 · Accepted**
 
 Single-input diagnostic probes run only after behavioural failures, with a
@@ -354,7 +354,7 @@ each execution and receives raw history plus the current horizon, bringing
 preprocessing/fitting inside the probe when implemented there. Consecutive
 singleton reuse skips. This is not process or external-state isolation.
 
-### D-022 — Revision histories enforce an explicit latest-available policy
+## D-022 — Revision histories enforce an explicit latest-available policy
 **2026-09-12 · Accepted**
 
 Revision sidecars use spec identity/time columns and configurable value/publication
@@ -367,7 +367,7 @@ violation, not universal behavioural evidence of future leakage.
 
 ---
 
-### D-023 — Direct Python inputs share the existing runner
+## D-023 — Direct Python inputs share the existing runner
 **2026-09-19 · Accepted**
 
 The package exports `run_checks` and accepts a DataFrame and Python callable

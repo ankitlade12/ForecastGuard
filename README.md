@@ -7,8 +7,8 @@
 [![Python](https://img.shields.io/badge/Python-3.12%20%7C%203.13-blue)](https://github.com/ankitlade12/ForecastGuard/blob/main/SUPPORT_MATRIX.md)
 [![License](https://img.shields.io/badge/License-Apache--2.0-green)](https://github.com/ankitlade12/ForecastGuard/blob/main/LICENSE)
 
-[Python API](https://github.com/ankitlade12/ForecastGuard/blob/main/docs/PYTHON_API.md) ·
-[Documentation](https://github.com/ankitlade12/ForecastGuard/blob/main/docs/README.md) ·
+[Python API](https://ankitlade12.github.io/ForecastGuard/PYTHON_API.html) ·
+[Documentation](https://ankitlade12.github.io/ForecastGuard/) ·
 [Examples](https://github.com/ankitlade12/ForecastGuard/tree/main/examples) ·
 [Report a bug](https://github.com/ankitlade12/ForecastGuard/issues/new/choose)
 

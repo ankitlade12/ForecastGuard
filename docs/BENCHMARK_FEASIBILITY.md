@@ -9,7 +9,7 @@ fitting adds substantial relative cost. These results do not establish market
 demand or superiority over another library.
 
 Production code was left unchanged. Acceptance criteria were recorded before
-the expanded run in [the benchmark plan](plans/2026-09-10-feasibility-benchmark.md).
+the expanded run in [the benchmark plan](https://github.com/ankitlade12/ForecastGuard/blob/main/docs/plans/2026-09-10-feasibility-benchmark.md).
 
 ## Detection results
 
@@ -236,16 +236,16 @@ first; `--no-sync` itself does not install them.
 
 Artifacts:
 
-- [Expanded corpus, all structured results (gzip JSON)](../benchmarks/results/2026-09-10-corpus.json.gz)
-- [Final interleaved timings, model reports, M4 provenance, scale samples](../benchmarks/results/2026-09-10-performance-interleaved.json)
-- [Initial sequential timings retained for audit](../benchmarks/results/2026-09-10-performance.json)
+- [Expanded corpus, all structured results (gzip JSON)](https://github.com/ankitlade12/ForecastGuard/blob/main/benchmarks/results/2026-09-10-corpus.json.gz)
+- [Final interleaved timings, model reports, M4 provenance, scale samples](https://github.com/ankitlade12/ForecastGuard/blob/main/benchmarks/results/2026-09-10-performance-interleaved.json)
+- [Initial sequential timings retained for audit](https://github.com/ankitlade12/ForecastGuard/blob/main/benchmarks/results/2026-09-10-performance.json)
 
 The corpus artifact is losslessly compressed to stay within the repository's
 file-size limit. Read it with `gzip.open(path, 'rt')` and `json.load`, or decompress
 it with `gzip -dk benchmarks/results/2026-09-10-corpus.json.gz`. The reproduction
 command above writes the uncompressed JSON.
-- [Corpus runner](../benchmarks/feasibility_benchmark.py)
-- [Performance runner](../benchmarks/feasibility_performance.py)
+- [Corpus runner](https://github.com/ankitlade12/ForecastGuard/blob/main/benchmarks/feasibility_benchmark.py)
+- [Performance runner](https://github.com/ankitlade12/ForecastGuard/blob/main/benchmarks/feasibility_performance.py)
 
 The initial timing pass showed machine-load variation, including a three-mode
 case faster than its separately measured one-mode case. It was retained and

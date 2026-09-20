@@ -3,7 +3,7 @@
 **Reviewed:** 2026-08-30
 
 This is a dated research snapshot, not a live compatibility or competitor claim.
-Use the [roadmap](../ROADMAP.md) for current priorities and recheck upstream
+Use the [roadmap](https://github.com/ankitlade12/ForecastGuard/blob/main/ROADMAP.md) for current priorities and recheck upstream
 documentation before relying on the comparisons below.
 
 ## Executive conclusion

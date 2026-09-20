@@ -7,6 +7,8 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Documentation
+- Publish a searchable Sphinx/MyST site with Furo, generated public API reference,
+  runnable examples, required docs CI checks and GitHub Pages deployment.
 - Switch installation guidance to PyPI following registry verification, record
   the first release, and document the maintainer-authorized admin merge bypass.
 

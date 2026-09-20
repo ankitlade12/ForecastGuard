@@ -1,6 +1,6 @@
 # Configuration reference
 
-[Documentation home](README.md) · [CLI reference](CLI.md) · [Examples](../examples/README.md)
+[Documentation home](README.md) · [CLI reference](CLI.md) · [Examples](https://github.com/ankitlade12/ForecastGuard/blob/main/examples/README.md)
 
 ForecastGuard loads a YAML mapping into `ForecastSpec`. Unknown fields and invalid
 role/window combinations are rejected. Data, revision and model paths resolve
@@ -121,7 +121,7 @@ This is distinct from the unfitted `--model-factory` used by `init`.
 
 Inspection checks consumed raw covariates against declarations. Adapter
 loading/fitting is outside the runtime probe count. Only load trusted code and
-model artifacts; see [SECURITY.md](../SECURITY.md).
+model artifacts; see [SECURITY.md](https://github.com/ankitlade12/ForecastGuard/blob/main/SECURITY.md).
 
 ## Python API
 
