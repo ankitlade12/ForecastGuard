@@ -43,4 +43,5 @@ responses are best effort.
 
 ## Supported versions
 
-During the `0.x` series, only the latest release receives fixes.
+Before the first release, fixes are developed on `main`; use a reviewed revision.
+Once the `0.x` series is published, only its latest release receives fixes.

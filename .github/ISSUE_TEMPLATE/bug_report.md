@@ -13,7 +13,8 @@ A clear description of the bug.
 diagnostics / replay / revision history / documentation.
 
 **Minimal repro**
-The smallest `forecastguard.yaml` + a tiny frame (or snippet) that reproduces it.
+The smallest Python API call + DataFrame, or `forecastguard.yaml` + tiny CSV,
+that reproduces it.
 Include the callable when runtime behaviour is involved. Use synthetic or anonymized
 data and redact private values from reports. Security reports belong in SECURITY.md's
 private reporting channel.

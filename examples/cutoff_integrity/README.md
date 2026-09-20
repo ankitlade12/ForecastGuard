@@ -9,8 +9,9 @@ forecastguard run --spec examples/cutoff_integrity/clean/forecastguard.yaml
 ```
 
 Both series have train rows through Jan 05 and a holdout of exactly Jan 06–07
-(= horizon 2). The cutoff check **passes**; the other two checks skip (stubs),
-so the run exits `0`.
+(= horizon 2). Cutoff integrity and the declared-covariate check **pass**.
+Runtime leakage **skips** because no callable is configured, so the run exits
+`0` by default and `1` with `--strict`.
 
 ## broken — fails
 

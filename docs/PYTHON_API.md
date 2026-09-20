@@ -49,7 +49,7 @@ data, boundaries, origins, perturbations and tolerance.
 
 ## Public entry point
 
-```python
+```text
 forecastguard.run_checks(
     spec,
     checks=None,

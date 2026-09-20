@@ -4,6 +4,12 @@ Living log of engineering judgment. Dated entries; newest decisions may
 supersede older ones (noted explicitly when they do). The PRD wins on product
 intent; this log wins on implementation mechanics.
 
+Entries preserve the decisions and scope at their dates. D-014 qualifies the
+original absolute leakage claims; D-015 supersedes single-window limits;
+D-016/D-018 deliver adapters and explanation hints deferred by D-008; and D-023
+adds direct Python inputs. Use the architecture and API guides for current
+behavior, rather than reading an early entry as the current feature list.
+
 ---
 
 ### D-001 — Nixtla-native data contract

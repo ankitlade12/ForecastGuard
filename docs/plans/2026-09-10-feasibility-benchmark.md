@@ -1,5 +1,8 @@
 # ForecastGuard feasibility benchmark
 
+> Historical implementation record. Status and verification below are as of this
+> plan's date; see the [current roadmap](../../ROADMAP.md) and [plan index](README.md).
+
 ## Question and scope
 
 Assess whether the current implementation is useful as a forecasting CI gate.

@@ -36,5 +36,6 @@ status and installation.
 
 - [Contributing](../CONTRIBUTING.md), [code of conduct](../CODE_OF_CONDUCT.md) and [roadmap](../ROADMAP.md).
 - [Changelog](../CHANGELOG.md) and [release runbook](RELEASING.md).
+- [Historical plan archive](plans/README.md): implementation records; current work is in the [roadmap](../ROADMAP.md).
 
 All guides live in the repository and can be read on GitHub or offline.

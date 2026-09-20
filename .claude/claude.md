@@ -2,7 +2,7 @@
 
 ## What This Project Is
 
-ForecastGuard CI is an **open-source CLI and GitHub Action** that validates a
+ForecastGuard CI is an **open-source Python library, CLI and GitHub Action** that validates a
 user's forecasting pipeline *before* its backtest is trusted. A model-selection
 agent that ranks models by backtest score will systematically prefer the leaky
 model, because leakage is what makes the backtest look best. ForecastGuard is
@@ -15,7 +15,7 @@ It runs three deliberately narrow checks against a Nixtla-native frame
 2. **Known-future covariates** — declared-vs-used contract diff
 3. **Runtime leakage** — behavioural perturbation (the moat)
 
-It is NOT a drift monitor, NOT a forecasting library, NOT an "all leakage"
+It is NOT a drift monitor, NOT a forecasting model-training library, NOT an "all leakage"
 detector. It is a **trust gate** with an honest, narrow scope.
 
 **Read these before starting any work, in order:**
@@ -63,7 +63,7 @@ Brainstorm → Spec → Plan → TDD → Implement → Review → Finalize. Plan
 5. **Skip loudly, never pass silently (D-006).** Missing precondition → prominent
    `SKIPPED`, not a green check.
 6. **The exit code is the gate (D-007).** `fail`/`error` → exit 1; `--strict`
-   promotes loud skips. A clean run is the only exit 0.
+   promotes loud skips. Without strict mode, PASS/SKIPPED runs can exit 0.
 7. **Honest, narrow scope (D-002).** Common high-impact errors, not "all leakage."
 
 ## Code Conventions (Python)

@@ -1,5 +1,5 @@
 # Default owner for everything in this repo.
-# Required reviewer on pull requests touching these paths.
+# Review requests for these paths; required approvals are set by branch protection.
 *           @ankitlade12
 
 # Core contract and checks — review with extra care (zero-false-positive bar).

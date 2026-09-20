@@ -1,5 +1,8 @@
 # Python library API
 
+> Historical implementation record. Status and verification below are as of this
+> plan's date; see the [current roadmap](../../ROADMAP.md) and [plan index](README.md).
+
 Reference: the user's AgentArmor library, inspected on 2026-09-19. Follow its
 top-level import experience, short Python quickstart, integration extras and
 release-triggered trusted publishing. ForecastGuard already uses Hatchling and

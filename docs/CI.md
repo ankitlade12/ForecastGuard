@@ -81,3 +81,29 @@ See [the execution policy](../SECURITY.md).
 
 The Action uploads SARIF as an artifact; it does not submit it to GitHub code
 scanning. That requires a separate upload step and appropriate repository access.
+
+## Main branch protection
+
+Configured on GitHub on 2026-09-19:
+
+- Changes to `main` must go through a pull request with one approving review.
+- New commits dismiss stale approvals.
+- The branch must be up to date, and the `conclude` check from GitHub Actions
+  must pass. It aggregates the Python 3.12/3.13 test matrix.
+- Review conversations must be resolved.
+- Force pushes and branch deletion are disabled.
+- These requirements also apply to repository administrators.
+
+The PR author cannot supply their own required approval. Code-owner review is
+not separately mandatory; a collaborator with write access can approve.
+The repository is public. Publication of a Python package is a separate action.
+
+GitHub settings are the enforcement mechanism; this document records the policy.
+Verify the live settings before a release:
+
+```bash
+gh api repos/ankitlade12/ForecastGuard/branches/main/protection
+```
+
+See [GitHub's protected-branch documentation](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches)
+for the behavior of required reviews and checks.

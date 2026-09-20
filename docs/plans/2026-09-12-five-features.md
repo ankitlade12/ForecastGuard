@@ -1,5 +1,8 @@
 # Five adoption features
 
+> Historical implementation record. Status and verification below are as of this
+> plan's date; see the [current roadmap](../../ROADMAP.md) and [plan index](README.md).
+
 Implement guided init, static execution planning plus coverage, targeted diagnostics,
 fresh pipeline replay, and revision-aware validation. Preserve the three registered
 checks and existing callables. Additive report fields retain schema 1.0.

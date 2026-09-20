@@ -12,7 +12,8 @@ forecastguard run --spec examples/known_future/clean/forecastguard.yaml
 `promo` is declared known-future and is populated through the holdout (Jan 06–07),
 so the check **passes**. `temp` is an undeclared covariate; it's reported as
 *past-only* in the summary, not flagged (whether it actually leaks is the runtime
-check's job — Slice 4).
+check's job). No runtime callable is configured, so runtime leakage SKIPs;
+the clean command exits `0` by default and `1` with `--strict`.
 
 ## broken — fails
 

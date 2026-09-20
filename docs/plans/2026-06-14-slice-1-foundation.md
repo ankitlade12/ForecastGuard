@@ -1,5 +1,8 @@
 # Slice 1 — Foundation
 
+> Historical implementation record. Status and verification below are as of this
+> plan's date; see the [current roadmap](../../ROADMAP.md) and [plan index](README.md).
+
 **Date:** 2026-06-14
 **Status:** Delivered (this pass)
 **Goal:** Lay the project skeleton, the typed contract, and a runnable end-to-end

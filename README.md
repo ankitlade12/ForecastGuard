@@ -28,9 +28,11 @@ includes an optional MLForecast integration. No account or hosted service is req
 
 ## Try a working example
 
-Install from this checkout with Python 3.12 or 3.13:
+With Python 3.12 or 3.13, clone the repository and install the library:
 
 ```bash
+git clone https://github.com/ankitlade12/ForecastGuard.git
+cd ForecastGuard
 python -m pip install .
 ```
 

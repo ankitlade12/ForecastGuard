@@ -202,6 +202,10 @@ The sidecar itself is supplied evidence, not independently verified provenance.
 
 ## Python API
 
+For DataFrames and local Python functions without configuration files, use the
+[Python API guide](PYTHON_API.md). The following is the file-based interface,
+including data-only planning:
+
 ```python
 from forecastguard.config import load_spec
 from forecastguard.planning import plan_execution
@@ -214,5 +218,6 @@ print(report.model_dump_json(indent=2))
 raise SystemExit(report.exit_code(strict=True))
 ```
 
-Use importable package references in Python API specs. The CLI additionally adds
+When using string references in Python API specs, make those modules importable.
+Direct callable arguments do not require import references. The CLI additionally adds
 the spec directory to the import path for sibling wrapper modules.

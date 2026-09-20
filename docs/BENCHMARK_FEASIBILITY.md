@@ -205,8 +205,11 @@ substantially more evidence.
 Measured environment: macOS 26.5.2 ARM64, Python 3.12.12, pandas 3.0.3,
 NumPy 2.4.6, Pydantic 2.13.4, MLForecast 1.0.2, scikit-learn 1.9.0.
 Production HEAD: `646be654c64d1780963f8e0a6892711947ebb60d`.
-The benchmark additions are the uncommitted working-tree files accompanying
-this report; HEAD identifies the detector revision, not a benchmark commit.
+At measurement time, the benchmark additions were uncommitted working-tree
+files accompanying this report. The recorded HEAD identifies the measured
+detector revision, not the current branch or a benchmark commit. Artifacts are
+now committed; these measurements have not been rerun for the later replay,
+revision and direct Python API changes.
 
 ```bash
 uv sync --extra dev --extra nixtla

@@ -19,6 +19,10 @@ publish a release. The current public status is stated in the [README](../README
    reporting and required branch checks in GitHub. These account settings cannot
    be inferred from committed files.
 
+Merge release changes through the protected `main` branch. An independent
+approval, up-to-date passing `conclude` CI, and resolved conversations are
+required; see [the branch policy](CI.md#main-branch-protection).
+
 ## Publishing setup
 
 The [publish workflow](../.github/workflows/publish.yml) runs when a GitHub release
