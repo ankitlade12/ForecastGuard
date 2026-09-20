@@ -359,6 +359,23 @@ The check is composed into known-future validation and never repairs data.
 Stale versions also fail this declared policy; that is a snapshot-contract
 violation, not universal behavioural evidence of future leakage.
 
+---
+
+### D-023 — Direct Python inputs share the existing runner
+**2026-09-19 · Accepted**
+
+The package exports `run_checks` and accepts a DataFrame and Python callable
+objects as keyword-only execution inputs. `ForecastSpec` remains serializable;
+`data` is optional for in-memory API use, while YAML loading still requires
+a path. Explicit frames take precedence over paths. Duplicate reference/object
+sources are rejected, and replay is mutually exclusive with feature/forecast
+boundaries across both input forms.
+
+Direct inputs use the same prerequisite ordering, budgets, diagnostics, coverage
+and checks as file-based execution. Perturbation still requires an explicit
+window and callable. Revision sidecars and fitted-model adapters retain their
+existing contracts.
+
 **2026-09-19 clarification:** revision identity uses exact stored-value equality,
 not the relative floating-point tolerance used for runtime predictions. Inputs
 and sidecars must use consistent numeric representations. This prevents large

@@ -23,6 +23,11 @@ def load_spec(path: str | Path) -> ForecastSpec:
     if not isinstance(raw, dict):
         raise ValueError(f"spec file {path} must contain a top-level mapping")
     spec = ForecastSpec.model_validate(raw)
+    data = spec.data
+    if data is None:
+        raise ValueError(
+            "YAML specs require data; use run_checks(spec, frame=...) for in-memory data"
+        )
     spec = spec.model_copy(
         update={
             "revisions": [
@@ -33,8 +38,8 @@ def load_spec(path: str | Path) -> ForecastSpec:
             ]
         }
     )
-    if not spec.data.is_absolute():
-        spec = spec.model_copy(update={"data": (path.parent / spec.data).resolve()})
+    if not data.is_absolute():
+        spec = spec.model_copy(update={"data": (path.parent / data).resolve()})
     if (
         spec.adapter is not None
         and spec.adapter.model_path is not None

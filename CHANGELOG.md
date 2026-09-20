@@ -6,6 +6,16 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Python library API
+- Public `forecastguard.run_checks` accepts an in-memory DataFrame and direct
+  feature/forecast callables or a fresh pipeline factory; `ReplayPipeline` is
+  exported for typed integrations.
+- `ForecastSpec.data` is optional for Python runs with `frame`; YAML continues
+  to require a data path. Conflicting callable sources are rejected explicitly.
+- Direct inputs share the CLI's prerequisite validation, runtime call budgets,
+  diagnostics, coverage and typed reports. No temporary dataset files are needed.
+- Python-first quickstart, pandas/MLForecast examples and installed-wheel CI smoke.
+
 ### Documentation and onboarding
 - Source-first quickstart with runnable clean/leaky examples and explicit exit codes.
 - User documentation index, configuration/CLI references, CI guide, troubleshooting,

@@ -125,6 +125,11 @@ model artifacts; see [SECURITY.md](../SECURITY.md).
 
 ## Python API
 
+For DataFrames and callable objects without YAML, use the
+[Python API guide](PYTHON_API.md). `ForecastSpec.data` may be omitted when you
+pass `frame` to `forecastguard.run_checks`; YAML specs still require `data`.
+The existing file-based interface remains available:
+
 ```python
 from forecastguard.config import load_spec
 from forecastguard.planning import plan_execution

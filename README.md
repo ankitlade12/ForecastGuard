@@ -28,6 +28,41 @@ includes an optional MLForecast integration. No account or hosted service is req
 
 ## Try a working example
 
+Install from this checkout with Python 3.12 or 3.13:
+
+```bash
+python -m pip install .
+```
+
+Then use the library directly:
+
+```python
+import pandas as pd
+import forecastguard
+
+frame = pd.DataFrame({
+    "unique_id": ["A"] * 6,
+    "ds": pd.date_range("2024-01-01", periods=6, freq="D"),
+    "y": [1.0, 3.0, 2.0, 4.0, 6.0, 5.0],
+})
+
+def features(data):
+    return data[["unique_id", "ds"]].assign(
+        lag=data.groupby("unique_id")["y"].shift(1)
+    )
+
+spec = forecastguard.ForecastSpec(cutoff="2024-01-04", horizon=2, freq="D")
+report = forecastguard.run_checks(spec, frame=frame, feature_fn=features)
+assert report.exit_code(strict=True) == 0
+```
+
+Change `shift(1)` to `shift(-1)` to see `FG-LEAK-001` detect a future-target
+dependency. DataFrames and local functions work directly, without YAML or
+temporary files. See the [Python API](docs/PYTHON_API.md) for forecast functions,
+pipeline factories, typed results, and a runnable MLForecast example.
+
+## CLI quickstart
+
 With Python 3.12 or 3.13 and [uv](https://docs.astral.sh/uv/getting-started/installation/)
 installed, run from a checkout containing these features:
 
@@ -54,6 +89,17 @@ environment instead, use `python -m pip install -e .` from the repository root
 and omit the `uv run` prefix.
 
 ## Connect your pipeline
+
+For Python applications, pass your existing function directly:
+
+```python
+report = forecastguard.run_checks(spec, frame=frame, forecast_fn=your_forecast)
+```
+
+`your_forecast(train, future)` returns keyed horizon predictions. Install
+`python -m pip install '.[nixtla]'` from the checkout for the optional MLForecast
+dependency. The [in-memory example](examples/python_api/mlforecast_example.py)
+shows fitting and prediction inside the tested function.
 
 For MLForecast, generate a spec and a wrapper around your own unfitted model factory:
 

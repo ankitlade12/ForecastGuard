@@ -8,6 +8,7 @@ status and installation.
 
 | I want to… | Read |
 |---|---|
+| Import ForecastGuard into a notebook or training script | [Python API](PYTHON_API.md) |
 | See a clean pipeline pass and a leaky one fail | [Quickstart](../README.md#try-a-working-example) |
 | Find a runnable example for my workflow | [Examples catalog](../examples/README.md) |
 | Generate a spec and MLForecast wrapper | [Guided setup](ADOPTION_GUIDE.md#1-guided-setup) |
@@ -16,6 +17,7 @@ status and installation.
 
 ## Use the library
 
+- [Python API](PYTHON_API.md): DataFrames, direct functions, replay factories and typed reports.
 - [Configuration reference](CONFIGURATION.md): YAML fields, window shapes and Python callable contracts.
 - [CLI and report reference](CLI.md): commands, flags, exit codes and structured results.
 - [Adoption guide](ADOPTION_GUIDE.md): planning, diagnostics, replay and revision histories.
