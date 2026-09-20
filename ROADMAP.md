@@ -65,12 +65,15 @@ and fresh pipeline factories. YAML is optional for Python callers. Examples,
 API documentation and installed-wheel CI coverage are included. See
 [the Python guide](docs/PYTHON_API.md) and D-023.
 
-## Release pending
+## Initial release ✅
 
-- Review and merge the Python API change through the protected `main` branch.
-- Verify PyPI trusted publishing and curate the first release notes using the
-  [release runbook](docs/RELEASING.md).
-- Publish the first version and test the registry-installed library and Action.
+- `0.1.0` is published on [PyPI](https://pypi.org/project/forecastguard/0.1.0/)
+  through GitHub Actions trusted publishing. A fresh registry installation passed
+  the clean/leaky Python examples, JSON/SARIF checks, and CLI version check.
+
+## Next verification
+
+- Exercise the released GitHub Action in an independent consumer repository.
 - Refresh the dated feasibility measurements against the release revision;
   pilot with independent forecasting pipelines before expanding scope.
 

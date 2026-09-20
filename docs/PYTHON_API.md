@@ -6,16 +6,16 @@ by the CLI and GitHub Action. No YAML or temporary CSV is needed.
 
 ## Install
 
-From a source checkout, with Python 3.12 or 3.13:
+With Python 3.12 or 3.13:
 
 ```bash
-python -m pip install .
+python -m pip install forecastguard
 # Optional real MLForecast integration:
-python -m pip install '.[nixtla]'
+python -m pip install 'forecastguard[nixtla]'
 ```
 
-The project is pre-release. These commands install the local package;
-PyPI publication remains a separate maintainer step.
+To install a development checkout instead, run `python -m pip install .`
+from the repository root.
 
 ## Quickstart
 

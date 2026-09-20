@@ -6,6 +6,12 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Documentation
+- Switch installation guidance to PyPI following registry verification, record
+  the first release, and document the maintainer-authorized admin merge bypass.
+
+## [0.1.0] - 2026-09-20
+
 ### PyPI release preparation
 - Refresh the README around Python usage, runnable leak detection and concise
   integration guidance; use absolute documentation links for the PyPI page.
@@ -145,9 +151,8 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   hygiene files, CI + PyPI publish workflows, and the composite GitHub Action.
 
 ### Release status
-- The implementation and local distribution checks are complete. The first
-  GitHub/PyPI release awaits review/merge, publisher verification and release
-  approval. See the release runbook; historical credential failures are not a
-  statement about current account access.
+- Published on GitHub and PyPI through trusted publishing. The registry-installed
+  package passed clean/leaky Python examples, JSON/SARIF checks and CLI verification.
 
-[Unreleased]: https://github.com/ankitlade12/ForecastGuard/commits/main
+[Unreleased]: https://github.com/ankitlade12/ForecastGuard/compare/v0.1.0...main
+[0.1.0]: https://github.com/ankitlade12/ForecastGuard/releases/tag/v0.1.0
