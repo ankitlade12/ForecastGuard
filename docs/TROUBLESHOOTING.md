@@ -25,6 +25,21 @@ spec and callable against the [configuration contracts](CONFIGURATION.md).
 | Revision history missing | Check sidecar paths relative to the YAML and configured history columns |
 | `FG-REV-003` on an older but available value | `latest_available` requires the newest published version, not any previous version |
 
+## Ranking comparison (unreleased)
+
+- `compare_rankings` cannot be imported: install the checkout with
+  `python -m pip install .`; PyPI 0.1.0 does not include it.
+- `audit.result.status` is `skipped`: read `audit.result.detail`. Both frames need
+  the same keys, scoring targets, explicit candidate columns and complete horizons.
+  Use `ForecastSpec(cutoff_col=..., horizon=..., freq=...)` for materialized CV.
+- A winner changes but the result is `pass`: comparison completed successfully;
+  rank changes do not establish leakage or modify the default gate.
+- No `comparisons[0]`: skipped comparisons have no scores; check status first.
+- Large integers or overflow: center/rescale targets and predictions consistently
+  before comparison, retaining the same scoring units across both frames.
+
+See the [full contract](PYTHON_API.md#compare-model-rankings-after-historical-replay).
+
 ## Diagnose one origin
 
 ```bash

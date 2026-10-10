@@ -43,6 +43,7 @@ jobs:
           uv venv "$RUNNER_TEMP/forecastguard-release" --python 3.12
           uv pip install --python "$RUNNER_TEMP/forecastguard-release/bin/python" dist/*.whl
           "$RUNNER_TEMP/forecastguard-release/bin/python" -I examples/python_api/pandas_example.py
+          "$RUNNER_TEMP/forecastguard-release/bin/python" -I examples/python_api/ranking_example.py
       - name: Save verified distributions
         uses: actions/upload-artifact@v4
         with:

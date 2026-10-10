@@ -106,6 +106,38 @@ python examples/python_api/mlforecast_example.py  # requires the nixtla extra
 
 Both verify a clean pipeline passes and an intentional leak fails.
 
+## Compare model rankings after replay (unreleased)
+
+Did reconstructing the information available at each forecast origin change the
+winning model? `compare_rankings()` compares your submitted predictions with
+predictions from your historical replay. It reports MAE, ranks and winner changes
+overall and per origin, with typed JSON output.
+
+This API is available in this checkout, **not in PyPI version 0.1.0**. From the
+repository root, install the checkout and run the self-contained example:
+
+```bash
+python -m pip install .
+python examples/python_api/ranking_example.py
+```
+
+The example produces this overall comparison:
+
+| Candidate | Submitted MAE | Replay MAE | Rank change |
+|---|---:|---:|---|
+| A | 0.00 | 1.50 | 1 → 2 |
+| B | 0.25 | 0.25 | 2 → 1 |
+
+You supply both prediction frames and describe the replay policy. Both frames
+must contain identical evaluation keys and scoring targets, complete horizons,
+and finite numeric predictions for at least two candidates. Incomplete evidence
+returns an explicit `SKIPPED` result, without partial rankings.
+
+A completed comparison does not certify the replay or prove leakage. This is a
+Python-only analysis alongside the existing three-check gate. See the
+[ranking guide](https://github.com/ankitlade12/ForecastGuard/blob/main/docs/PYTHON_API.md#compare-model-rankings-after-historical-replay)
+for the API, ties, scoring weights and limitations.
+
 ## Three checks, one report
 
 | Check | Detects |

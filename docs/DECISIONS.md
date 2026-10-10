@@ -386,3 +386,17 @@ existing contracts.
 not the relative floating-point tolerance used for runtime predictions. Inputs
 and sidecars must use consistent numeric representations. This prevents large
 values from hiding a distinct revision within a proportional tolerance.
+
+## D-024 — Ranking impact is an optional descriptive analysis
+**2026-10-10 · Accepted**
+
+`compare_rankings` compares supplied materialized CV predictions against an
+explicitly described historical replay. It requires identical keys, scoring
+truth and candidates, validates complete horizons, and reports pooled/per-origin
+MAE and competition ranks. Unusable evidence returns a loud typed SKIPPED result
+without partial rankings. Exact ties share winner status.
+
+This does not add a fourth default check or alter gate semantics. A completed
+comparison cannot certify replay provenance or prove that a ranking change was
+caused by leakage. Reconstruction, fitting and availability evidence remain the
+caller's responsibility. Random perturbations are not corrected predictions.

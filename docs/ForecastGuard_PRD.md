@@ -114,3 +114,14 @@ GitHub annotations, and the step summary all render the same typed report.
 | **Adoption + Python API** | Setup, coverage, diagnostics, replay, revisions, and direct DataFrame/callable inputs ✅ |
 | **Release** | `0.1.0` published on GitHub/PyPI; fresh registry installation verified ✅ |
 | **Later** | Hosted CI tier, additional framework adapters |
+
+
+## 10. Optional ranking comparison (unreleased)
+
+The Python `compare_rankings` analysis compares submitted and caller-supplied
+historical-replay CV predictions. It reports MAE, ranks and winner-set changes
+overall and per origin, skipping explicitly when evidence is incomparable.
+This complements the three-check gate without changing its verdicts. Replay
+construction and provenance remain the caller's responsibility; score/rank
+changes alone are not leakage evidence. See [the Python contract](PYTHON_API.md#compare-model-rankings-after-historical-replay)
+and D-024.

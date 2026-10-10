@@ -20,6 +20,10 @@ These docs follow `main`. For released behavior, see the
 Checks cover the configured probes; a passing result does not prove the absence
 of every kind of leakage. See [scope and limitations](ForecastGuard_PRD.md#6-honest-scope).
 
+The unreleased [model-ranking comparison](PYTHON_API.md#compare-model-rankings-after-historical-replay)
+reports whether caller-supplied historical replay changes the winning model.
+Install the checkout to use it; it is not included in PyPI 0.1.0.
+
 ```{toctree}
 :caption: Get started
 :maxdepth: 1

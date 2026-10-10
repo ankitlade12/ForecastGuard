@@ -164,3 +164,11 @@ docs/                    # PRD, ARCHITECTURE, DECISIONS, plans
 
 Quality gates are commit-time (pre-commit: ruff + mypy + unit tier) plus the CI
 workflow (`.github/workflows/ci.yml`) on push/PR.
+
+### Optional ranking analysis
+
+`ranking.compare_rankings` compares caller-supplied submitted/replay CV frames.
+It reuses cutoff validation through `CheckContext` and returns `RankingAudit`
+(`models/ranking.py`), with a `CheckResult` plus pooled/per-origin score changes.
+It performs no IO or model execution and is separate from the three-check gate.
+See the [Python API](PYTHON_API.md#compare-model-rankings-after-historical-replay).

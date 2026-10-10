@@ -71,6 +71,12 @@ API documentation and installed-wheel CI coverage are included. See
   through GitHub Actions trusted publishing. A fresh registry installation passed
   the clean/leaky Python examples, JSON/SARIF checks, and CLI version check.
 
+## Unreleased: model-ranking comparison ✅
+
+Optional Python analysis compares caller-supplied submitted/replay predictions,
+with strict row/target alignment and typed overall/per-origin MAE and ranks.
+Replay construction and provenance remain caller responsibilities (D-024).
+
 ## Next verification
 
 - Exercise the released GitHub Action in an independent consumer repository.

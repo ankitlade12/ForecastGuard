@@ -14,6 +14,7 @@ status and installation.
 | Import ForecastGuard into a notebook or training script | [Python API](PYTHON_API.md) |
 | See a clean pipeline pass and a leaky one fail | [Quickstart](https://github.com/ankitlade12/ForecastGuard/blob/main/README.md#try-a-working-example) |
 | Find a runnable example for my workflow | [Examples catalog](https://github.com/ankitlade12/ForecastGuard/blob/main/examples/README.md) |
+| Compare model winners before and after historical replay (unreleased) | [Ranking comparison](PYTHON_API.md#compare-model-rankings-after-historical-replay) |
 | Generate a spec and MLForecast wrapper | [Guided setup](ADOPTION_GUIDE.md#1-guided-setup) |
 | Check which inputs and integrations are supported | [Support matrix](https://github.com/ankitlade12/ForecastGuard/blob/main/SUPPORT_MATRIX.md) |
 | Validate a rolling MLForecast backtest | [MLForecast tutorial](tutorials/nixtla-rolling.md) |
