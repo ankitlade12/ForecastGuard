@@ -46,6 +46,8 @@ class CutoffIntegrityCheck:
         work["_ds"] = pd.to_datetime(work[spec.time_col])
         if spec.cutoff_col is not None:
             work["_cutoff"] = pd.to_datetime(work[spec.cutoff_col])
+            # holdout_mask parses this column for every window; parse it only once.
+            work[spec.cutoff_col] = work["_cutoff"]
 
         cutoffs = window_cutoffs(spec, work)
         rolling = spec.cutoff_col is not None or bool(spec.cutoffs)
@@ -196,19 +198,20 @@ def _window_violations(
         for series_id, group in work.sort_values([id_col, "_ds"]).groupby(id_col, sort=False)
     }
     ids = sorted(groups, key=str)
+    first_ds = work.groupby(id_col, sort=False, observed=True)["_ds"].min()
     for cutoff in cutoffs:
         expected = forecast_grid(cutoff, offset, horizon)
+        suspect = _suspect_windows(work, id_col, ids, first_ds, cutoff, expected, ctx)
         for series_id in ids:
-            group = groups[series_id]
-            if ctx.spec.cutoff_col is not None and not group["_cutoff"].eq(cutoff).any():
+            if series_id not in suspect:
                 continue
-            violation = _classify_window(series_id, group, cutoff, expected, ctx, rolling=rolling)
-            if violation is None:
-                continue
-            if len(violations) < _MAX_SERIES_VIOLATIONS:
-                violations.append(violation)
-            else:
+            if len(violations) >= _MAX_SERIES_VIOLATIONS:
                 truncated += 1
+                continue
+            group = groups[series_id]
+            violation = _classify_window(series_id, group, cutoff, expected, ctx, rolling=rolling)
+            if violation is not None:
+                violations.append(violation)
     if truncated:
         violations.append(
             Violation(
@@ -219,6 +222,39 @@ def _window_violations(
             )
         )
     return violations
+
+
+def _suspect_windows(
+    work: pd.DataFrame,
+    id_col: str,
+    ids: list[object],
+    first_ds: pd.Series,
+    cutoff: pd.Timestamp,
+    expected: list[pd.Timestamp],
+    ctx: CheckContext,
+) -> set[object]:
+    """Series whose window at ``cutoff`` is not proven well-formed in one vectorized pass.
+
+    A window is proven only when it has training history (raw input) and its distinct
+    timestamps are exactly the strictly increasing expected grid. Everything else is
+    left to ``_classify_window``, which decides and explains each violation.
+    """
+    spec = ctx.spec
+    selected = holdout_mask(spec, work, work["_ds"], cutoff, expected)
+    window = work.loc[selected, [id_col, "_ds"]]
+    evaluated = set(window[id_col].unique()) if spec.cutoff_col is not None else set(ids)
+    grid = pd.DatetimeIndex(expected)
+    if not (grid.is_monotonic_increasing and grid.is_unique):
+        return evaluated
+    stats = (
+        window.assign(_on_grid=window["_ds"].isin(grid))
+        .groupby(id_col, sort=False, observed=True)
+        .agg(steps=("_ds", "nunique"), on_grid=("_on_grid", "all"))
+    )
+    proven = stats.index[stats["steps"].eq(len(grid)) & stats["on_grid"]]
+    if spec.cutoff_col is None:
+        proven = proven[first_ds.reindex(proven).le(cutoff).to_numpy()]
+    return evaluated - set(proven)
 
 
 def _classify_window(
