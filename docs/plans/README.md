@@ -25,3 +25,4 @@ superseded decisions are recorded in [DECISIONS.md](../DECISIONS.md).
 - [2026-09-12 — Public onboarding and documentation](2026-09-12-public-onboarding.md)
 - [2026-09-19 — Python library API](2026-09-19-python-library-api.md)
 - [2026-10-10 — Model-ranking impact audit](2026-10-10-ranking-impact.md)
+- [2026-10-11 — Cutoff-window performance](2026-10-11-cutoff-window-performance.md)

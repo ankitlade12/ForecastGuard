@@ -333,6 +333,13 @@ Polars is therefore not added.
 **Why:** CI integrations must not develop divergent verdict logic, and another
 dataframe backend is complexity without measured need.
 
+**2026-10-11 clarification:** the reference run covered one raw-history cutoff.
+Rolling and materialized-CV inputs looped over every series/origin pair and
+measured ~22–34k rows/s at 800k rows. A vectorized pre-screen now proves exact
+windows per origin and sends only suspect windows to the existing classifier:
+840k CV rows validate in ~1.2s and 800k rolling rows in ~0.6s on the maintainer
+machine. The benchmark covers all three window modes; pandas remains sufficient.
+
 ---
 
 ## D-020 — Setup and planning never infer availability or execute user code

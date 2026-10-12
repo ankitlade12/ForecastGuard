@@ -57,4 +57,5 @@ No release or deployment was performed.
 - Follow-ups, not defects: a `metric=` option (sMAPE; MASE needs training history
   absent from CV output) and building replay frames from a `pipeline_factory`.
 - Measured: 840k CV rows took ~78s, almost entirely the existing cutoff check on
-  `cutoff_col` specs; fixed separately because it changes core gate code.
+  `cutoff_col` specs. The cutoff-window performance commits in this PR reduce
+  the same call to ~4.4s; see the [2026-10-11 plan](2026-10-11-cutoff-window-performance.md).

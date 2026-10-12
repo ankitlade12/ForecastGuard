@@ -361,3 +361,112 @@ def test_null_series_identifier_is_a_structural_failure() -> None:
     assert result.status is CheckStatus.FAIL
     assert _codes(result) == {"FG-CUTOFF-014"}
     assert _by_code(result, "FG-CUTOFF-014").evidence["null_id_rows"] == 2
+
+
+# --- many windows: ordering, truncation and timestamp semantics ------------------
+
+
+def _cv_frame(series: int, cutoffs: list[str], horizon: int, freq: str = "D") -> pd.DataFrame:
+    rows = [
+        {"unique_id": f"S{index:02d}", "cutoff": cutoff, "ds": ds, "y": 1.0}
+        for index in range(series)
+        for cutoff in cutoffs
+        for ds in pd.date_range(cutoff, periods=horizon + 1, freq=freq)[1:]
+    ]
+    return pd.DataFrame(rows)
+
+
+def _run_cv(frame: pd.DataFrame, *, horizon: int, freq: str = "D") -> CheckResult:
+    spec = ForecastSpec(cutoff_col="cutoff", horizon=horizon, freq=freq)
+    return CutoffIntegrityCheck().run(CheckContext(spec=spec, frame=frame))
+
+
+def test_cv_violations_are_ordered_by_origin_then_series_and_truncated() -> None:
+    first, second = "2024-01-10", "2024-01-20"
+    frame = _cv_frame(60, [first, second], horizon=3)
+    in_first = frame["cutoff"].eq(first)
+    index = frame["unique_id"].str[1:].astype(int)
+    too_few = in_first & index.mod(3).eq(0) & frame["ds"].eq(pd.Timestamp("2024-01-13"))
+    misaligned = in_first & index.mod(3).eq(1) & frame["ds"].eq(pd.Timestamp("2024-01-12"))
+    frame.loc[misaligned, "ds"] = pd.Timestamp("2024-01-17")
+    extra = frame.loc[frame["cutoff"].eq(second) & index.lt(20)].drop_duplicates("unique_id")
+    frame = pd.concat([frame.loc[~too_few], extra.assign(ds=pd.Timestamp("2024-01-25"))])
+
+    result = _run_cv(frame, horizon=3)
+
+    expected = [
+        (f"S{i:02d}@{first}T00:00:00", "too_few" if i % 3 == 0 else "misaligned")
+        for i in range(60)
+        if i % 3 != 2
+    ] + [(f"S{i:02d}@{second}T00:00:00", "too_many") for i in range(10)]
+    *windows, overflow = result.violations
+    assert result.status is CheckStatus.FAIL
+    assert result.summary == "50 cutoff-integrity violations across 2 window(s)"
+    assert [(v.location, v.evidence["reason"]) for v in windows] == expected
+    assert {v.code for v in windows} == {"FG-CUTOFF-004"}
+    assert overflow.code == "FG-CUTOFF-099"
+    assert overflow.evidence == {"truncated_windows": 10}
+    assert windows[0].evidence == {
+        "cutoff": "2024-01-10T00:00:00",
+        "reason": "too_few",
+        "expected": ["2024-01-11T00:00:00", "2024-01-12T00:00:00", "2024-01-13T00:00:00"],
+        "actual": ["2024-01-11T00:00:00", "2024-01-12T00:00:00"],
+        "missing": ["2024-01-13T00:00:00"],
+        "unexpected": [],
+    }
+
+
+def test_rolling_windows_report_training_holdout_and_grid_problems_in_order() -> None:
+    dates = pd.date_range("2024-01-01", "2024-01-20", freq="D")
+    rows = []
+    for index in range(25):
+        series = dates
+        if index < 5:
+            series = dates[dates >= "2024-01-07"]
+        elif index < 10:
+            series = dates[dates <= "2024-01-10"]
+        elif index < 15:
+            series = dates[dates != "2024-01-12"]
+        rows += [{"unique_id": f"S{index:02d}", "ds": ds, "y": 1.0} for ds in series]
+    spec = ForecastSpec(cutoffs=["2024-01-05", "2024-01-10", "2024-01-15"], horizon=3, freq="D")
+
+    result = CutoffIntegrityCheck().run(CheckContext(spec=spec, frame=pd.DataFrame(rows)))
+
+    expected = (
+        [("FG-CUTOFF-002", f"S{i:02d}@2024-01-05T00:00:00") for i in range(5)]
+        + [("FG-CUTOFF-003", f"S{i:02d}@2024-01-10T00:00:00") for i in range(5, 10)]
+        + [("FG-CUTOFF-004", f"S{i:02d}@2024-01-10T00:00:00") for i in range(10, 15)]
+        + [("FG-CUTOFF-003", f"S{i:02d}@2024-01-15T00:00:00") for i in range(5, 10)]
+    )
+    assert [(v.code, v.location) for v in result.violations] == expected
+    assert result.summary == "20 cutoff-integrity violations across 3 window(s)"
+
+
+def test_timezone_aware_cv_keys_are_validated() -> None:
+    frame = _cv_frame(3, ["2024-01-10T00:00:00+00:00"], horizon=2)
+    assert _run_cv(frame, horizon=2).status is CheckStatus.PASS
+    frame.loc[0, "ds"] = pd.Timestamp("2024-01-15T00:00:00+00:00")
+    result = _run_cv(frame, horizon=2)
+    assert [v.location for v in result.violations] == ["S00@2024-01-10T00:00:00+00:00"]
+
+
+def test_calendar_frequency_cv_windows() -> None:
+    frame = _cv_frame(2, ["2024-01-01", "2024-02-01"], horizon=2, freq="MS")
+    assert _run_cv(frame, horizon=2, freq="MS").status is CheckStatus.PASS
+    frame.loc[0, "ds"] = pd.Timestamp("2024-02-15")
+    result = _run_cv(frame, horizon=2, freq="MS")
+    assert [v.location for v in result.violations] == ["S00@2024-01-01T00:00:00"]
+
+
+def test_descending_grid_never_passes() -> None:
+    frame = pd.DataFrame(
+        {
+            "unique_id": ["A", "A"],
+            "cutoff": ["2024-01-10", "2024-01-10"],
+            "ds": ["2024-01-09", "2024-01-08"],
+            "y": [1.0, 1.0],
+        }
+    )
+    result = _run_cv(frame, horizon=2, freq="-1D")
+    assert result.status is CheckStatus.FAIL
+    assert _by_code(result, "FG-CUTOFF-004").evidence["reason"] == "misaligned"

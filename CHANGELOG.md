@@ -13,6 +13,12 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   order-independent summation; integers outside the exact float64 range skip
   rather than rounding into false ties.
 
+### Changed
+- Cutoff integrity proves well-formed rolling and materialized-CV windows in one
+  vectorized pass per origin; only suspect windows take the detailed path. An
+  840k-row CV frame validates in ~1.2s instead of ~38s, with identical violations.
+  The scale benchmark gains `--windows rolling|cv` and `--origins`.
+
 ### Documentation
 - Document the unreleased ranking comparison in the README, Sphinx API reference,
   example catalog, support matrix and troubleshooting guide; add installed-wheel
