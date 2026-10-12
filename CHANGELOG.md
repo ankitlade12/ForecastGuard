@@ -19,6 +19,10 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   840k-row CV frame validates in ~1.2s instead of ~38s, with identical violations.
   The scale benchmark gains `--windows rolling|cv` and `--origins`.
 
+### Fixed
+- Failed cutoff-integrity summaries count windows omitted by the 50-violation
+  output cap instead of reporting only the displayed violations.
+
 ### Documentation
 - Document the unreleased ranking comparison in the README, Sphinx API reference,
   example catalog, support matrix and troubleshooting guide; add installed-wheel
