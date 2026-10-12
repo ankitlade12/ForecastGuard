@@ -12,6 +12,10 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   840k-row CV frame validates in ~1.2s instead of ~38s, with identical violations.
   The scale benchmark gains `--windows rolling|cv` and `--origins`.
 
+### Fixed
+- Failed cutoff-integrity summaries count windows omitted by the 50-violation
+  output cap instead of reporting only the displayed violations.
+
 ### Documentation
 - Publish a searchable Sphinx/MyST site with Furo, generated public API reference,
   runnable examples, required docs CI checks and GitHub Pages deployment.

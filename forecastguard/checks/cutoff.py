@@ -55,20 +55,21 @@ class CutoffIntegrityCheck:
         duplicate = _duplicate_violation(work, spec.id_col, cv_output=spec.cutoff_col is not None)
         if duplicate is not None:
             violations.append(duplicate)
-        violations.extend(
-            _window_violations(
-                work,
-                spec.id_col,
-                cutoffs,
-                offset,
-                spec.horizon,
-                ctx,
-                rolling=rolling,
-            )
+        window_violations, truncated = _window_violations(
+            work,
+            spec.id_col,
+            cutoffs,
+            offset,
+            spec.horizon,
+            ctx,
+            rolling=rolling,
         )
+        violations.extend(window_violations)
 
         if violations:
-            count = sum(1 for violation in violations if violation.severity is not Severity.INFO)
+            count = truncated + sum(
+                1 for violation in violations if violation.severity is not Severity.INFO
+            )
             plural = "s" if count != 1 else ""
             scope = (
                 f"across {len(cutoffs)} window(s)"
@@ -190,7 +191,8 @@ def _window_violations(
     ctx: CheckContext,
     *,
     rolling: bool,
-) -> list[Violation]:
+) -> tuple[list[Violation], int]:
+    """Return reported window violations and the number omitted by the output cap."""
     violations: list[Violation] = []
     truncated = 0
     groups = {
@@ -221,7 +223,7 @@ def _window_violations(
                 evidence={"truncated_windows": truncated},
             )
         )
-    return violations
+    return violations, truncated
 
 
 def _suspect_windows(

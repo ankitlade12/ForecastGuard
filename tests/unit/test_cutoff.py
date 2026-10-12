@@ -401,7 +401,7 @@ def test_cv_violations_are_ordered_by_origin_then_series_and_truncated() -> None
     ] + [(f"S{i:02d}@{second}T00:00:00", "too_many") for i in range(10)]
     *windows, overflow = result.violations
     assert result.status is CheckStatus.FAIL
-    assert result.summary == "50 cutoff-integrity violations across 2 window(s)"
+    assert result.summary == "60 cutoff-integrity violations across 2 window(s)"
     assert [(v.location, v.evidence["reason"]) for v in windows] == expected
     assert {v.code for v in windows} == {"FG-CUTOFF-004"}
     assert overflow.code == "FG-CUTOFF-099"
