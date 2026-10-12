@@ -183,6 +183,7 @@ frames must have the same unique `(id, cutoff, time)` keys, identical scoring
 targets and full configured horizons. Dates are parsed before alignment; row
 order does not matter. Missing predictions, changed targets, invalid windows,
 non-finite/non-real values and arithmetic overflow cause a loud SKIPPED result.
+Window problems keep their structured `FG-CUTOFF-*` violations on `result.violations`.
 The function never silently intersects evaluation rows. Series/windows missing
 from **both** frames cannot be discovered without an external expected roster.
 
@@ -202,7 +203,7 @@ python examples/python_api/ranking_example.py
 
 | Field | Meaning |
 |---|---|
-| `result` | `CheckResult`: `pass` when comparison completes; `skipped` with `detail` when evidence is unusable |
+| `result` | `CheckResult`: `pass` when comparison completes; `skipped` with `detail` (plus any cutoff `violations`) when evidence is unusable |
 | `replay_policy` | The supplied description, preserved verbatim; not verified |
 | `compared_rows` | Number of matched evaluation rows; zero when skipped |
 | `comparisons` | Pooled result first (`cutoff=None`), then origins in chronological order; empty when skipped |

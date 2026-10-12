@@ -9,12 +9,9 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 - Optional `compare_rankings` Python API: compare submitted and historical-replay
   CV predictions using pooled/per-origin MAE, ranks and winner changes, with
-  typed JSON output and explicit skips for incomparable evidence.
-
-### Fixed
-- Ranking MAE uses accurate summation so row order does not change near-tied
-  results; integers outside the exact float64 range skip instead of silently
-  rounding into false ties.
+  typed JSON output and explicit skips for incomparable evidence. Scores use
+  order-independent summation; integers outside the exact float64 range skip
+  rather than rounding into false ties.
 
 ### Documentation
 - Document the unreleased ranking comparison in the README, Sphinx API reference,

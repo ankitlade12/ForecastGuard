@@ -1,8 +1,11 @@
 """Ranking impact requires comparable evidence, not just plausible scores."""
 
+import sys
+
 import pandas as pd
 import pytest
 
+import forecastguard.ranking as ranking
 from forecastguard import ForecastSpec, RankingAudit, compare_rankings
 
 pytestmark = pytest.mark.unit
@@ -80,6 +83,7 @@ def test_unchanged_and_tied_winners() -> None:
         "null_id",
         "duplicate_column",
         "overflow",
+        "nullable_na",
     ],
 )
 def test_unusable_evidence_skips_without_partial_rankings(problem: str) -> None:
@@ -108,6 +112,8 @@ def test_unusable_evidence_skips_without_partial_rankings(problem: str) -> None:
         replay["unique_id"] = None
     elif problem == "duplicate_column":
         replay = pd.concat([replay, replay[["a"]]], axis=1)
+    elif problem == "nullable_na":
+        replay["a"] = pd.array([10, None, 10, 10], dtype="Int64")
     report = compare_rankings(
         spec,
         submitted=submitted,
@@ -189,6 +195,36 @@ def test_full_windows_cannot_hide_coverage_mismatches(problem: str) -> None:
     assert not report.comparisons
 
 
+def test_skip_preserves_structured_cutoff_violations() -> None:
+    spec, submitted, replay = evidence()
+    report = compare_rankings(
+        spec,
+        submitted=submitted,
+        replay=replay.iloc[1:],
+        candidates=["a", "b"],
+        replay_policy="archive",
+    )
+    assert report.result.status == "skipped"
+    assert (report.result.detail or "").startswith("replay:")
+    [violation] = report.result.violations
+    assert violation.code == "FG-CUTOFF-004"
+    assert violation.location == "A@2024-01-01T00:00:00"
+
+
+def test_unexpected_internal_errors_are_not_reported_as_skips(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def broken(*args: object, **kwargs: object) -> None:
+        raise TypeError("internal bug")
+
+    monkeypatch.setattr(ranking, "_compare", broken)
+    spec, submitted, replay = evidence()
+    with pytest.raises(TypeError, match="internal bug"):
+        compare_rankings(
+            spec, submitted=submitted, replay=replay, candidates=["a", "b"], replay_policy="p"
+        )
+
+
 def test_large_integer_predictions_do_not_silently_become_a_tie() -> None:
     spec, submitted, _ = evidence()
     submitted["y"] = 2**53
@@ -199,6 +235,25 @@ def test_large_integer_predictions_do_not_silently_become_a_tie() -> None:
     )
     assert report.result.status == "skipped"
     assert "integer" in (report.result.detail or "")
+
+
+def test_finite_errors_overflowing_summation_skip() -> None:
+    spec = ForecastSpec(cutoff_col="origin", horizon=1, freq="D")
+    frame = pd.DataFrame(
+        {
+            "unique_id": list("ABC"),
+            "origin": ["2024-01-01"] * 3,
+            "ds": ["2024-01-02"] * 3,
+            "y": [0.0] * 3,
+            "a": [sys.float_info.max] * 3,
+            "b": [1.0] * 3,
+        }
+    )
+    report = compare_rankings(
+        spec, submitted=frame, replay=frame, candidates=["a", "b"], replay_policy="archive"
+    )
+    assert report.result.status == "skipped"
+    assert "overflow" in (report.result.detail or "")
 
 
 def test_row_order_does_not_change_near_tied_rankings() -> None:
