@@ -1,6 +1,6 @@
 [project]
 name = "forecastguard"
-version = "0.1.0"
+version = "0.2.0"
 description = "Validate forecasting backtests for cutoff errors, covariate availability, and runtime leakage."
 readme = "README.md"
 requires-python = ">=3.12"
