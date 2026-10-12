@@ -6,6 +6,8 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-12
+
 ### Added
 - Optional `compare_rankings` Python API: compare submitted and historical-replay
   CV predictions using pooled/per-origin MAE, ranks and winner changes, with
@@ -24,7 +26,7 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   output cap instead of reporting only the displayed violations.
 
 ### Documentation
-- Document the unreleased ranking comparison in the README, Sphinx API reference,
+- Document the ranking comparison in the README, Sphinx API reference,
   example catalog, support matrix and troubleshooting guide; add installed-wheel
   ranking smoke coverage to CI and release verification.
 - Publish a searchable Sphinx/MyST site with Furo, generated public API reference,
@@ -176,5 +178,6 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Published on GitHub and PyPI through trusted publishing. The registry-installed
   package passed clean/leaky Python examples, JSON/SARIF checks and CLI verification.
 
-[Unreleased]: https://github.com/ankitlade12/ForecastGuard/compare/v0.1.0...main
+[Unreleased]: https://github.com/ankitlade12/ForecastGuard/compare/v0.2.0...main
+[0.2.0]: https://github.com/ankitlade12/ForecastGuard/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/ankitlade12/ForecastGuard/releases/tag/v0.1.0

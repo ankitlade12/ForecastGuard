@@ -35,7 +35,7 @@ python -m pip install 'forecastguard[nixtla]'   # MLForecast
 python -m pip install 'forecastguard[parquet]'  # Parquet datasets
 ```
 
-For a reproducible install of the initial release, use `forecastguard==0.1.0`.
+For a reproducible install of this release, use `forecastguard==0.2.0`.
 
 ## Try a working example
 
@@ -119,8 +119,8 @@ execution budgets and targeted diagnostics. Read the
 [adoption guide](https://github.com/ankitlade12/ForecastGuard/blob/main/docs/ADOPTION_GUIDE.md)
 for their contracts and examples.
 
-**Unreleased:** `compare_rankings()` reports whether a historical replay changes
-which model wins your backtest. It is on `main`, not in PyPI 0.1.0; see the
+**New in 0.2.0:** `compare_rankings()` reports whether a historical replay changes
+which model wins your backtest. See the
 [ranking guide](https://github.com/ankitlade12/ForecastGuard/blob/main/docs/PYTHON_API.md#compare-model-rankings-after-historical-replay).
 
 ## CLI and CI

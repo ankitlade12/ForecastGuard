@@ -141,8 +141,7 @@ the returned object's `predict` receives the exact configured origin.
 
 ## Compare model rankings after historical replay
 
-**Unreleased:** install this checkout with `python -m pip install .` from the
-repository root. This API is not available in PyPI 0.1.0.
+**Added in 0.2.0.** Install with `python -m pip install "forecastguard>=0.2.0"`.
 
 The optional `compare_rankings` analysis compares supplied backtest predictions
 with predictions from a caller-controlled historical replay. It computes pooled
