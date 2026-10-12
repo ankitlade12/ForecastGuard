@@ -139,7 +139,6 @@ For factory implementations, see the [replay contract](ADOPTION_GUIDE.md#4-fresh
 Pass your factory as `run_checks(spec, frame=frame, pipeline_factory=create_pipeline)`;
 the returned object's `predict` receives the exact configured origin.
 
-(compare-rankings)=
 ## Compare model rankings after historical replay
 
 **Unreleased:** install this checkout with `python -m pip install .` from the
@@ -150,6 +149,12 @@ with predictions from a caller-controlled historical replay. It computes pooled
 and per-origin MAE, competition ranks, score/rank deltas, and winner-set changes.
 Positive deltas mean worse replay performance. Exact ties share rank; a tie
 appearing or disappearing changes the winner set.
+
+*Replay* has the same meaning as the [fresh pipeline replay](ADOPTION_GUIDE.md#4-fresh-pipeline-replay)
+boundary: rerunning the pipeline with only the inputs available at each origin.
+`run_checks(pipeline_factory=...)` tests such a pipeline for leakage;
+`compare_rankings` measures how its predictions change model selection. Here you
+produce the replay predictions yourself; ForecastGuard does not execute them.
 
 ```python
 from forecastguard import ForecastSpec, compare_rankings
@@ -188,7 +193,11 @@ The function never silently intersects evaluation rows. Series/windows missing
 from **both** frames cannot be discovered without an external expected roster.
 
 MAE gives each series/origin/horizon row equal weight; overlapping target dates
-count once per origin. Results have no confidence intervals or significance
+count once per origin. Because horizons are complete, each per-origin score is
+also the mean of per-series MAE. MAE is scale-dependent: in panels mixing large-
+and small-valued series, the large series dominate pooled rankings. If scales
+differ, rescale each series identically in both frames or compare subsets of
+similar scale. Results have no confidence intervals or significance
 claims. The required policy description is caller-supplied provenance, not
 machine-verified availability evidence. The function does not execute models,
 reconstruct snapshots, or estimate a universally "corrected" backtest score.

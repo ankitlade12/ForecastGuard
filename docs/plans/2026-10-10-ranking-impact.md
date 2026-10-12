@@ -43,3 +43,18 @@ Built wheel/sdist and ran ranking and existing pandas examples from an isolated
 wheel installation; ranking JSON round-tripped successfully. Checks ran locally
 on Python 3.12/macOS; remote Linux/Python 3.13 CI has not run in this session.
 No release or deployment was performed.
+
+## Maintainer review (2026-10-11)
+
+- Only explicit evidence validation now skips. The previous blanket
+  ValueError/TypeError/KeyError catch reported internal defects as unusable
+  evidence; those now raise. Finite-input `fsum` overflow remains an explicit skip.
+- Skips retain structured `FG-CUTOFF-*` violations (D-005) instead of flattening
+  up to 51 messages into `detail`; unparseable keys surface as `FG-CUTOFF-011`.
+- Documentation consolidated into the Python guide; README keeps a short pointer
+  below the three checks, and the PRD/index additions were removed. Added the
+  relationship to `pipeline_factory` replay and the MAE scale caveat.
+- Follow-ups, not defects: a `metric=` option (sMAPE; MASE needs training history
+  absent from CV output) and building replay frames from a `pipeline_factory`.
+- Measured: 840k CV rows took ~78s, almost entirely the existing cutoff check on
+  `cutoff_col` specs; fixed separately because it changes core gate code.
