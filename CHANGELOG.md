@@ -6,7 +6,27 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- Optional `compare_rankings` Python API: compare submitted and historical-replay
+  CV predictions using pooled/per-origin MAE, ranks and winner changes, with
+  typed JSON output and explicit skips for incomparable evidence. Scores use
+  order-independent summation; integers outside the exact float64 range skip
+  rather than rounding into false ties.
+
+### Changed
+- Cutoff integrity proves well-formed rolling and materialized-CV windows in one
+  vectorized pass per origin; only suspect windows take the detailed path. An
+  840k-row CV frame validates in ~1.2s instead of ~38s, with identical violations.
+  The scale benchmark gains `--windows rolling|cv` and `--origins`.
+
+### Fixed
+- Failed cutoff-integrity summaries count windows omitted by the 50-violation
+  output cap instead of reporting only the displayed violations.
+
 ### Documentation
+- Document the unreleased ranking comparison in the README, Sphinx API reference,
+  example catalog, support matrix and troubleshooting guide; add installed-wheel
+  ranking smoke coverage to CI and release verification.
 - Publish a searchable Sphinx/MyST site with Furo, generated public API reference,
   runnable examples, required docs CI checks and GitHub Pages deployment.
 - Switch installation guidance to PyPI following registry verification, record

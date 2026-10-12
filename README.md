@@ -119,6 +119,10 @@ execution budgets and targeted diagnostics. Read the
 [adoption guide](https://github.com/ankitlade12/ForecastGuard/blob/main/docs/ADOPTION_GUIDE.md)
 for their contracts and examples.
 
+**Unreleased:** `compare_rankings()` reports whether a historical replay changes
+which model wins your backtest. It is on `main`, not in PyPI 0.1.0; see the
+[ranking guide](https://github.com/ankitlade12/ForecastGuard/blob/main/docs/PYTHON_API.md#compare-model-rankings-after-historical-replay).
+
 ## CLI and CI
 
 With the package installed, run from the checkout:

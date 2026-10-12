@@ -72,6 +72,7 @@ forecastguard.run_checks(
 
 `ForecastSpec`, `Report`, `CheckResult`, `CheckStatus`, `Severity`, `Violation`,
 `AvailabilitySpec`, `RevisionSpec`, `MLForecastAdapterSpec`, `ReplayPipeline`,
+`CandidateImpact`, `RankingComparison`, `RankingAudit`, `compare_rankings`,
 and `run_checks` are exported from `forecastguard`. Existing submodule imports
 continue to work. Public types and keyword parameters are the supported library
 surface; underscore-prefixed helpers are internal. This remains an alpha API;
@@ -137,3 +138,103 @@ memory and assert expected outcomes; they exit zero when those assertions pass.
 For factory implementations, see the [replay contract](ADOPTION_GUIDE.md#4-fresh-pipeline-replay).
 Pass your factory as `run_checks(spec, frame=frame, pipeline_factory=create_pipeline)`;
 the returned object's `predict` receives the exact configured origin.
+
+## Compare model rankings after historical replay
+
+**Unreleased:** install this checkout with `python -m pip install .` from the
+repository root. This API is not available in PyPI 0.1.0.
+
+The optional `compare_rankings` analysis compares supplied backtest predictions
+with predictions from a caller-controlled historical replay. It computes pooled
+and per-origin MAE, competition ranks, score/rank deltas, and winner-set changes.
+Positive deltas mean worse replay performance. Exact ties share rank; a tie
+appearing or disappearing changes the winner set.
+
+*Replay* has the same meaning as the [fresh pipeline replay](ADOPTION_GUIDE.md#4-fresh-pipeline-replay)
+boundary: rerunning the pipeline with only the inputs available at each origin.
+`run_checks(pipeline_factory=...)` tests such a pipeline for leakage;
+`compare_rankings` measures how its predictions change model selection. Here you
+produce the replay predictions yourself; ForecastGuard does not execute them.
+
+```python
+from forecastguard import ForecastSpec, compare_rankings
+
+# Both frames contain identity, time, origin, common scoring targets, and the
+# same explicit prediction columns. Construct replay predictions using only
+# inputs historically available at each origin, not random perturbations.
+audit = compare_rankings(
+    ForecastSpec(cutoff_col="origin", horizon=2, freq="D"),
+    submitted=submitted_predictions,
+    replay=historical_predictions,
+    candidates=["model_a", "model_b"],
+    replay_policy="Archived weather forecasts published by each origin; refit per origin",
+)
+if audit.result.status == "pass":
+    overall = audit.comparisons[0]  # subsequent entries are individual origins
+    print(overall.winner_changed, overall.scores)
+else:
+    print(audit.result.detail)  # explicit skip, no partial ranking
+print(audit.model_dump_json(indent=2))
+```
+
+`RankingAudit`, `RankingComparison` and `CandidateImpact` are public typed
+outputs. `RankingAudit.result` is a `CheckResult`; PASS means the comparison
+completed, **not** that replay is verified or leakage-free. The analysis does not
+alter `run_checks`, its three checks, or gate exit codes. Run the existing checks
+on the pipelines separately. Ranking changes alone do not prove leakage.
+
+This first version accepts materialized CV output (`cutoff_col`) only. Both
+frames must have the same unique `(id, cutoff, time)` keys, identical scoring
+targets and full configured horizons. Dates are parsed before alignment; row
+order does not matter. Missing predictions, changed targets, invalid windows,
+non-finite/non-real values and arithmetic overflow cause a loud SKIPPED result.
+Window problems keep their structured `FG-CUTOFF-*` violations on `result.violations`.
+The function never silently intersects evaluation rows. Series/windows missing
+from **both** frames cannot be discovered without an external expected roster.
+
+MAE gives each series/origin/horizon row equal weight; overlapping target dates
+count once per origin. Because horizons are complete, each per-origin score is
+also the mean of per-series MAE. MAE is scale-dependent: in panels mixing large-
+and small-valued series, the large series dominate pooled rankings. If scales
+differ, rescale each series identically in both frames or compare subsets of
+similar scale. Results have no confidence intervals or significance
+claims. The required policy description is caller-supplied provenance, not
+machine-verified availability evidence. The function does not execute models,
+reconstruct snapshots, or estimate a universally "corrected" backtest score.
+
+Run the self-contained toy example, which generates predictions at two origins:
+
+```bash
+python examples/python_api/ranking_example.py
+```
+
+### Output contract
+
+| Field | Meaning |
+|---|---|
+| `result` | `CheckResult`: `pass` when comparison completes; `skipped` with `detail` (plus any cutoff `violations`) when evidence is unusable |
+| `replay_policy` | The supplied description, preserved verbatim; not verified |
+| `compared_rows` | Number of matched evaluation rows; zero when skipped |
+| `comparisons` | Pooled result first (`cutoff=None`), then origins in chronological order; empty when skipped |
+| `comparisons[].rows` | Rows contributing to this comparison |
+| `comparisons[].scores` | Candidate results in the requested candidate order |
+| `submitted_mae`, `replay_mae` | Mean absolute error against the same scoring targets |
+| `mae_delta`, `rank_delta` | Replay minus submitted; positive means worse |
+| `submitted_rank`, `replay_rank` | Competition ranks, for example `1, 1, 3` for two tied winners |
+| `submitted_winners`, `replay_winners` | Alphabetically sorted names of all rank-1 candidates |
+| `winner_changed` | Whether the winner sets differ; does not signal every lower-rank change |
+| `scope_notes` | Interpretation and coverage limitations |
+
+Scoring uses float64 arithmetic and accurate summation. Ties use exact computed
+MAE equality, with no tolerance or significance threshold. Integer inputs outside
+`[-2**53, 2**53]` skip to prevent rounding from creating false ties; center or
+rescale before comparison. Float inputs already rounded upstream cannot be
+recovered. Use consistent timezone conventions for origins and timestamps;
+naive and timezone-aware keys are not interchangeable.
+
+Only key, target and explicitly named candidate columns are evaluated. Other
+`ForecastSpec` settings (availability, revisions, callables, adapters and runtime
+budgets) do not execute in this analysis. Use `run_checks` separately to validate
+those contracts. `RankingAudit` has no `exit_code()` method; inspect `result.status`
+before accessing comparisons. A changed winner is descriptive, not an automatic
+failure of the existing gate.

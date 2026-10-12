@@ -24,6 +24,9 @@ spec and callable against the [configuration contracts](CONFIGURATION.md).
 | All checks PASS but a known leak remains | Check whether preprocessing, cached artifacts or external inputs sit outside the configured callable; consult the benchmark blind spots |
 | Revision history missing | Check sidecar paths relative to the YAML and configured history columns |
 | `FG-REV-003` on an older but available value | `latest_available` requires the newest published version, not any previous version |
+| `compare_rankings` cannot be imported | Check the [release status](PYTHON_API.md#compare-model-rankings-after-historical-replay); install from a checkout until it is published |
+| Ranking comparison SKIPPED | Read `result.detail` and `result.violations`; both frames need identical keys, scoring targets, candidate columns and complete horizons |
+| Winner changes but ranking result is PASS | PASS means the comparison completed; rank changes do not establish leakage or affect the gate |
 
 ## Diagnose one origin
 

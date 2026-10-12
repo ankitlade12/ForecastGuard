@@ -15,3 +15,4 @@ causal lag and passes; the second reads tomorrow's target and fails with
 - [Rolling-backtest tutorial](tutorials/nixtla-rolling.md): validate raw history and materialized cross-validation output.
 - [Replay and revision examples](https://github.com/ankitlade12/ForecastGuard/tree/main/examples/adoption): bring preprocessing and fitting inside the tested boundary.
 - [Complete example catalog](https://github.com/ankitlade12/ForecastGuard/blob/main/examples/README.md): YAML specs, datasets and expected outcomes.
+- [Model-ranking example](https://github.com/ankitlade12/ForecastGuard/blob/main/examples/python_api/ranking_example.py): a historical replay reverses the winning model; see the [ranking guide](PYTHON_API.md#compare-model-rankings-after-historical-replay).

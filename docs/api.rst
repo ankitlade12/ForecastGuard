@@ -50,3 +50,19 @@ Reports and results
 Pydantic contracts also support ``model_dump()``, ``model_dump_json()`` and
 ``model_validate_json()`` for structured serialization. The CLI's JSON and SARIF
 formats are documented in the :doc:`CLI reference <CLI>`.
+
+Model-ranking comparison
+------------------------
+
+See the ranking section of the :doc:`Python guide <PYTHON_API>` for release
+status, input shapes, scoring semantics, skips and limitations. These results are
+separate from the three-check gate; PASS means the comparison completed, not that
+replay is certified.
+
+.. autofunction:: forecastguard.compare_rankings
+
+.. autoclass:: forecastguard.RankingAudit
+
+.. autoclass:: forecastguard.RankingComparison
+
+.. autoclass:: forecastguard.CandidateImpact

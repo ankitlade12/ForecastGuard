@@ -11,6 +11,7 @@ See ``docs/ForecastGuard_PRD.md`` for the product spec and
 ``docs/ARCHITECTURE.md`` for the module map.
 """
 
+from forecastguard.models.ranking import CandidateImpact, RankingAudit, RankingComparison
 from forecastguard.models.report import (
     CheckResult,
     CheckStatus,
@@ -24,20 +25,25 @@ from forecastguard.models.spec import (
     MLForecastAdapterSpec,
     RevisionSpec,
 )
+from forecastguard.ranking import compare_rankings
 from forecastguard.replay import ReplayPipeline
 from forecastguard.runner import run_checks
 
 __all__ = [
     "AvailabilitySpec",
+    "CandidateImpact",
     "CheckResult",
     "CheckStatus",
     "ForecastSpec",
     "MLForecastAdapterSpec",
+    "RankingAudit",
+    "RankingComparison",
     "ReplayPipeline",
     "Report",
     "RevisionSpec",
     "Severity",
     "Violation",
+    "compare_rankings",
     "run_checks",
 ]
 

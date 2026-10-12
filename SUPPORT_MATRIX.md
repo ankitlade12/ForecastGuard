@@ -23,6 +23,7 @@ records exact dependency versions for that measurement.
 | Feature | Supported behaviour | Evidence / limitation |
 |---|---|---|
 | In-memory Python API | DataFrame plus direct feature/forecast functions or replay factory | [API tests](tests/integration/test_python_api.py); sidecars/adapters retain file/import contracts |
+| Ranking comparison (unreleased) | Python-only, caller-supplied CV frames; MAE overall/per origin | [Ranking tests](tests/unit/test_ranking.py); replay provenance is not verified; no CLI/SARIF integration |
 | Single raw-history cutoff | Validate all post-cutoff rows against one horizon | [Cutoff tests](tests/unit/test_cutoff.py) |
 | Rolling raw history | Validate each configured origin and its bounded horizon | Same cutoff suite; later history may remain in the input |
 | Materialized CV output | Validate `(id, cutoff, time)` and availability | Runtime probes skip because raw training history is absent |

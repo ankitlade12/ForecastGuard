@@ -35,6 +35,10 @@ After an established behavioural failure, `diagnostics` runs budgeted single-inp
 interventions that cannot change the original verdict. Report coverage and
 diagnostic fields are additive to schema 1.0 and retained by all renderers.
 
+Outside the gate, `ranking.compare_rankings` scores caller-supplied submitted and
+replay CV frames after reusing cutoff validation; it performs no IO or model
+execution and returns its own `RankingAudit` rather than a `Report` entry.
+
 See [the adoption guide](ADOPTION_GUIDE.md) for contracts and complete examples.
 
 The default runner validates structure and declared covariates before importing
@@ -100,6 +104,7 @@ forecastguard/
 │   ├── report.py        # Report, CheckResult, Violation, Severity, CheckStatus
 │   ├── adapter.py       # fitted-framework consumed-feature evidence
 │   ├── execution.py     # typed coverage and diagnostic evidence
+│   ├── ranking.py       # RankingAudit — optional ranking-comparison output
 │   └── hint.py          # explanation-only source locations
 ├── checks/
 │   ├── protocol.py      # Check protocol + CheckContext (the run bundle)
@@ -116,6 +121,7 @@ forecastguard/
 ├── execution.py         # actual runtime accounting and probe coverage
 ├── replay.py            # fresh pipeline factory adaptation
 ├── diagnostics.py       # budgeted explanations after behavioural failures
+├── ranking.py           # optional submitted-vs-replay ranking comparison (not a gate check)
 ├── windows.py           # shared single/rolling/CV window semantics
 ├── perturb.py           # nullify/noise/sign_flip contract-aware inputs
 ├── explain.py           # AST hints after behavioural proof only

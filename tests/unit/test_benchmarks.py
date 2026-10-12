@@ -25,8 +25,14 @@ def test_mutation_corpus_detects_all_seeded_leaks_and_passes_controls() -> None:
     assert result["correct"] == result["total"]
 
 
-def test_scale_benchmark_returns_machine_readable_evidence() -> None:
-    result = run_scale(series=10, periods=40, horizon=7)
+@pytest.mark.parametrize(
+    "windows,origins,rows", [("single", 1, 400), ("rolling", 5, 400), ("cv", 5, 350)]
+)
+def test_scale_benchmark_returns_machine_readable_evidence(
+    windows: str, origins: int, rows: int
+) -> None:
+    result = run_scale(series=10, periods=40, horizon=7, windows=windows, origins=origins)
     assert result["status"] == "pass"
-    assert result["rows"] == 400
+    assert result["rows"] == rows
+    assert result["windows"] == windows
     assert isinstance(result["polars_recommended"], bool)
